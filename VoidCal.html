@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-ray Void Cal v4.0 - Ultimate Performance</title>
+    <style>
+        /* ================= UI 樣式設定 ================= */
+        body {
+            background-color: #1e1e1e;
+            color: #cccccc;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .top-bar {
+            height: 35px;
+            background-color: #181818;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid #333;
+            z-index: 100;
+        }
+
+        .top-bar .title {
+            color: #888;
+            font-size: 13px;
+            margin-left: auto;
+            margin-right: 15px;
+        }
+
+        .menu-item {
+            padding: 8px 15px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #ccc;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background-color: #333333;
+            color: #fff;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 360px;
+            min-width: 360px;
+            background-color: #252526;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #333;
+            z-index: 10;
+            order: 2;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #2d2d2d;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #888;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #fff;
+            background-color: #252526;
+            border-bottom: 2px solid #007acc;
+        }
+
+        .tab:hover:not(.active) {
+            color: #ccc;
+            background-color: #333;
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tab-content::-webkit-scrollbar-thumb {
+            background: #454545;
+            border-radius: 4px;
+        }
+
+        .panel-box {
+            background-color: #333333;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #454545;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #fff;
+            border-bottom: 1px solid #454545;
+            padding-bottom: 5px;
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+            margin: 8px 0 2px;
+        }
+
+        .val-text {
+            color: #d7ba7d;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            background-color: #3c3c3c;
+            color: #ccc;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        .btn:hover {
+            background-color: #4d4d4d;
+        }
+
+        .btn.primary {
+            background-color: #0e639c;
+            color: #fff;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        .btn.primary:hover {
+            background-color: #1177bb;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tool-btn {
+            background-color: #3c3c3c;
+            border: none;
+            color: #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .tool-btn.active {
+            background-color: #094771;
+            color: #fff;
+            border: 1px solid #007acc;
+        }
+
+        .bottom-panel {
+            padding: 15px;
+            background-color: #252526;
+            border-top: 1px solid #333;
+        }
+
+        .void-rate {
+            font-size: 28px;
+            font-weight: bold;
+            color: #89d185;
+            text-align: center;
+        }
+
+        .void-rate.danger {
+            color: #f14c4c;
+        }
+
+        #status {
+            font-size: 11px;
+            color: #d7ba7d;
+            font-weight: bold;
+            margin-bottom: 5px;
+            line-height: 1.2;
+            word-wrap: break-word;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            background-color: #111;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            cursor: crosshair;
+            order: 1;
+        }
+
+        #viewCanvas {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            image-rendering: pixelated;
+        }
+
+        #contextMenu {
+            position: absolute;
+            background-color: #454545;
+            padding: 1px;
+            border-radius: 6px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 9999;
+        }
+
+        .cm-inner {
+            background-color: #252526;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cm-item {
+            padding: 10px 25px;
+            color: #ccc;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cm-item:hover {
+            background-color: #094771;
+            color: #fff;
+        }
+
+        .cm-item.active::before {
+            content: "●";
+            color: #007acc;
+            font-size: 10px;
+        }
+
+        .cm-item:not(.active)::before {
+            content: "○";
+            color: transparent;
+            font-size: 10px;
+        }
+
+        #hiddenContainer {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <div style="color: #007acc; font-size: 16px; margin-right: 15px;">💠</div>
+        <div class="menu-item" onclick="document.getElementById('fileInput').click()" id="menu-open">📁 選擇圖檔</div>
+        <div class="menu-item" onclick="document.getElementById('projectInput').click()" id="menu-load">📂 載入專案</div>
+        <div class="menu-item" onclick="saveProject()" id="menu-save">💾 儲存專案</div>
+        <div class="menu-item" onclick="exportReport()" id="menu-export">📊 匯出報表</div>
+        <div class="menu-item" style="position: relative;" onclick="toggleLangMenu()" id="menu-lang">🌐 語言 ▼
+            <div id="langMenu"
+                style="display: none; position: absolute; top: 100%; left: 0; background: #333; border: 1px solid #454545; z-index: 1000; min-width: 100px;">
+                <div class="cm-item" onclick="setLang('zh-TW', event)">繁體中文</div>
+                <div class="cm-item" onclick="setLang('zh-CN', event)">简体中文</div>
+                <div class="cm-item" onclick="setLang('en', event)">English</div>
+                <div class="cm-item" onclick="setLang('ja', event)">日本語</div>
+                <div class="cm-item" onclick="setLang('ko', event)">한국어</div>
+                <div class="cm-item" onclick="setLang('fr', event)">Français</div>
+                <div class="cm-item" onclick="setLang('de', event)">Deutsch</div>
+            </div>
+        </div>
+        <div class="menu-item" onclick="showHelp()" id="menu-help">❓ 說明</div>
+        <div class="title" id="main-title">X-ray Void Cal v4.0</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <input type="file" id="projectInput" accept=".vod" style="display: none;" onchange="loadProject(event)">
+
+    <div class="workspace">
+        <div class="sidebar">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('tabImg')">影像</div>
+                <div class="tab" onclick="switchTab('tabVoid')">氣泡</div>
+                <div class="tab" onclick="switchTab('tabEdit')">編修</div>
+            </div>
+
+            <div id="tabImg" class="tab-content active">
+                <div class="panel-box">
+                    <h3>影像狀態與預處理</h3>
+                    <label class="checkbox-group"><input type="checkbox" id="chkInv" onchange="triggerPipeline(1)">
+                        正負片反轉</label>
+                    <label class="checkbox-group"><input type="checkbox" id="chkClahe" checked
+                            onchange="triggerPipeline(1)"> 強化對比 (CLAHE)</label>
+
+                    <input type="range" id="slClahe" min="1.0" max="10.0" step="0.1" value="2.0"
+                        oninput="document.getElementById('vClahe').innerText=this.value; triggerPipeline(1, true, true);"
+                        onchange="triggerPipeline(1)">
+
+                    <label><span>條紋過濾 (De-stripe)</span> <span id="vDestripe" class="val-text">0</span></label>
+                    <input type="range" id="slDestripe" min="0" max="20" step="1" value="0"
+                        oninput="document.getElementById('vDestripe').innerText=this.value; triggerPipeline(1, true, true);"
+                        onchange="triggerPipeline(1)">
+
+                    <label><span>畫面縮放 (Zoom)</span> <span id="vZoom" class="val-text">1.0</span></label>
+                    <input type="range" id="slZoom" min="0.1" max="10.0" step="0.1" value="1.0"
+                        oninput="document.getElementById('vZoom').innerText=parseFloat(this.value).toFixed(1); setZoomFromSlider(this.value);">
+
+                    <label><span>銳化增強 (Sharpen)</span> <span id="vSharp" class="val-text">0</span></label>
+                    <input type="range" id="slSharp" min="0" max="5" step="0.1" value="0"
+                        oninput="document.getElementById('vSharp').innerText=this.value; triggerPipeline(1, true, true);"
+                        onchange="triggerPipeline(1)">
+
+                    <label><span>亮度/對比 (Alpha)</span> <span id="vAlpha" class="val-text">1.0</span></label>
+                    <input type="range" id="slAlpha" min="0.5" max="3.0" step="0.1" value="1.0"
+                        oninput="document.getElementById('vAlpha').innerText=this.value; triggerPipeline(1, true, true);"
+                        onchange="triggerPipeline(1)">
+
+                    <label><span>對比 Gamma</span> <span id="vGamma" class="val-text">1.0</span></label>
+                    <input type="range" id="slGamma" min="0.1" max="3.0" step="0.1" value="1.0"
+                        oninput="document.getElementById('vGamma').innerText=this.value; triggerPipeline(1, true, true);"
+                        onchange="triggerPipeline(1)">
+                </div>
+            </div>
+
+            <div id="tabVoid" class="tab-content">
+                <div class="panel-box">
+                    <h3>智能氣泡檢測參數</h3>
+                    <label><span>核心敏感度 (Kernel)</span> <span id="vKernel" class="val-text">21</span></label>
+                    <input type="range" id="slKernel" min="3" max="51" step="2" value="21"
+                        oninput="document.getElementById('vKernel').innerText=this.value; triggerPipeline(2, true, true);"
+                        onchange="triggerPipeline(2)">
+
+                    <label><span>雜訊平滑 (Morph)</span> <span id="vMorph" class="val-text">2</span></label>
+                    <input type="range" id="slMorph" min="0" max="15" step="1" value="2"
+                        oninput="document.getElementById('vMorph').innerText=this.value; triggerPipeline(2, true, true);"
+                        onchange="triggerPipeline(2)">
+
+                    <label><span>最小面積 (Min Area)</span> <span id="vArea" class="val-text">10</span></label>
+                    <input type="range" id="slArea" min="1" max="500" step="1" value="10"
+                        oninput="document.getElementById('vArea').innerText=this.value; triggerPipeline(3, true, true);"
+                        onchange="triggerPipeline(3)">
+
+                    <label><span>最小圓形度 (Circularity)</span> <span id="vCirc" class="val-text">0.40</span></label>
+                    <input type="range" id="slCirc" min="0.1" max="1.0" step="0.05" value="0.40"
+                        oninput="document.getElementById('vCirc').innerText=this.value; triggerPipeline(3, true, true);"
+                        onchange="triggerPipeline(3)">
+
+                    <div class="tool-grid" style="margin-top: 15px;">
+                        <button class="btn primary" style="margin-top:0;" onclick="autoHeuristicSearch()"
+                            id="btn-auto-opt">🤖 自動最佳化</button>
+                        <button class="btn" onclick="accumulateMask()" id="btn-accumulate">➕ 鎖定並疊加</button>
+                    </div>
+                </div>
+                <div class="panel-box">
+                    <h3>🔥 聯合檢測引擎</h3>
+                    <label class="checkbox-group"><input type="checkbox" id="chkOtsu" checked
+                            onchange="triggerPipeline(2)"> 全局閥值 (Global Thresh) <span id="vThresh" class="val-text"
+                            style="margin-left: auto;">20</span></label>
+                    <input type="range" id="slThresh" min="1" max="100" step="1" value="20"
+                        oninput="document.getElementById('vThresh').innerText=this.value; triggerPipeline(2, true, true);"
+                        onchange="triggerPipeline(2)">
+
+                    <label class="checkbox-group"><input type="checkbox" id="chkCanny" onchange="triggerPipeline(2)">
+                        邊緣檢測 (Canny Edge) <span id="vCannyM" class="val-text"
+                            style="margin-left: auto;">9</span></label>
+                    <input type="range" id="slCannyM" min="1" max="21" step="2" value="9"
+                        oninput="document.getElementById('vCannyM').innerText=this.value; triggerPipeline(2, true, true);"
+                        onchange="triggerPipeline(2)">
+
+                    <label class="checkbox-group"><input type="checkbox" id="chkAdapt" onchange="triggerPipeline(2)">
+                        自適應檢測 (Adaptive) <span id="vAdaptC" class="val-text"
+                            style="margin-left: auto;">-5</span></label>
+                    <input type="range" id="slAdaptC" min="-20" max="20" step="1" value="-5"
+                        oninput="document.getElementById('vAdaptC').innerText=this.value; triggerPipeline(2, true, true);"
+                        onchange="triggerPipeline(2)">
+                </div>
+            </div>
+
+            <div id="tabEdit" class="tab-content">
+                <div class="panel-box">
+                    <h3>檢視控制</h3>
+                    <label class="checkbox-group"><input type="checkbox" id="chkShowMask" checked onchange="drawView()">
+                        顯示紅光遮罩</label>
+                    <label class="checkbox-group"><input type="checkbox" id="chkShowLabels" onchange="drawView()">
+                        顯示各氣泡編號與佔比</label>
+                    <label class="checkbox-group"><input type="checkbox" id="chkSolid" checked
+                            onchange="triggerPipeline(3)">
+                        氣泡實心化 (Solidify)</label>
+                    <label>遮罩透明度: <span id="vOpacity" class="val-text">0.7</span></label>
+                    <input type="range" id="slOpacity" min="0.0" max="1.0" step="0.1" value="0.7"
+                        oninput="document.getElementById('vOpacity').innerText=this.value; drawView();">
+                </div>
+
+                <div class="panel-box">
+                    <h3>手動編修工具</h3>
+                    <div class="tool-grid">
+                        <button class="tool-btn active" id="tool-pan" onclick="setMode('pan')">✋ 平移 (Pan)</button>
+                        <button class="tool-btn" id="tool-roi" onclick="setMode('roi')">🎯 框選 (ROI)</button>
+                        <button class="tool-btn" id="tool-draw" onclick="setMode('draw')">🖌️ 補點 (Draw)</button>
+                        <button class="tool-btn" id="tool-erase" onclick="setMode('erase')">🧼 擦除 (Erase)</button>
+                        <button class="tool-btn" id="tool-fill" onclick="setMode('fill')"
+                            style="grid-column: span 2;">🪣 智慧填滿 (Fill)</button>
+                    </div>
+
+                    <label>畫筆尺寸 (滾輪可調): <span id="vBrush" class="val-text">10</span></label>
+                    <input type="range" id="slBrush" min="1" max="100" value="10"
+                        oninput="document.getElementById('vBrush').innerText=this.value; drawView();">
+
+                    <label><span>斷點接合 (Gap Fill)</span> <span id="vGap" class="val-text">0</span></label>
+                    <input type="range" id="slGap" min="0" max="20" step="1" value="0"
+                        oninput="document.getElementById('vGap').innerText=this.value; triggerPipeline(3, true, true);"
+                        onchange="triggerPipeline(3)">
+
+                    <label>填滿寬容度 (滾輪可調): <span id="vFillTol" class="val-text">15</span></label>
+                    <input type="range" id="slFillTol" min="0" max="100" value="15"
+                        oninput="document.getElementById('vFillTol').innerText=this.value; updateFillPreview();">
+
+                    <div class="tool-grid" style="margin-top: 15px;">
+                        <button class="btn" onclick="undoFill()">↩️ 復原油漆桶</button>
+                        <button class="btn" onclick="clearUserMask()">🗑️ 清空手動修改</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-panel">
+                <div id="status">⏳ 等待載入 OpenCV...</div>
+                <label class="checkbox-group" style="margin-bottom: 8px; margin-top: 8px;"><input type="checkbox"
+                        id="chkWatermark" checked> 報表加入浮水印 (Watermark)</label>
+                <label>空洞判定門檻 (%): <span id="vLimit" class="val-text">10</span></label>
+                <input type="range" id="slLimit" min="0" max="100" value="10"
+                    oninput="document.getElementById('vLimit').innerText=this.value; updateResultColor();">
+                <div id="voidResult" class="void-rate">Void rate : -- %</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper" tabindex="0">
+            <canvas id="viewCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="hiddenContainer">
+        <canvas id="canvasImgRaw"></canvas>
+        <canvas id="canvasUserMask"></canvas>
+        <canvas id="canvasAccumulatedMask"></canvas>
+    </div>
+
+    <div id="contextMenu">
+        <div class="cm-inner">
+            <div class="cm-item active" id="cm-pan" onclick="setMode('pan')">平移畫面</div>
+            <div class="cm-item" id="cm-roi" onclick="setMode('roi')">框選 / 縮放晶片</div>
+            <div class="cm-item" id="cm-draw" onclick="setMode('draw')">手動補點</div>
+            <div class="cm-item" id="cm-erase" onclick="setMode('erase')">手動擦除</div>
+            <div class="cm-item" id="cm-fill" onclick="setMode('fill')">智慧填滿 (油漆桶)</div>
+        </div>
+    </div>
+
+    <script>
+        var Module = {
+            onRuntimeInitialized: function () {
+                isCvReady = true;
+                document.getElementById('status').innerText = "✔️ 系統就緒";
+                document.getElementById('status').style.color = "#89d185";
+            }
+        };
+    </script>
+    <script async src="https://docs.opencv.org/4.8.0/opencv.js"></script>
+
+    <script>
+        // ================= 核心變數 =================
+        let isCvReady = false;
+        let isProjectLoading = false;
+        let img = new Image();
+
+        let matRaw = null;
+        let matPreprocessed = null;
+        let baseThreshData = null;
+        let globalFilteredData = null;
+        let baseThreshW = 0, baseThreshH = 0;
+        let globalIsPadded = false;
+        let globalPadX = 0, globalPadY = 0, globalPadW = 0, globalPadH = 0;
+
+        let voidLabels = [];
+        let currentVoidRate = 0;
+
+        let bgCanvas = document.createElement('canvas');
+        let resultCanvas = document.createElement('canvas');
+        let userMaskCtx = document.getElementById('canvasUserMask').getContext('2d', { willReadFrequently: true });
+
+        let transform = { scale: 1, x: 0, y: 0 };
+        let mode = 'pan';
+        let roi = null;
+        let lastDrawnRoi = null;
+
+        let isDragging = false;
+        let dragMode = null;
+        let dragStartScreen = { x: 0, y: 0 };
+        let dragStartTransform = { x: 0, y: 0 };
+        let dragStartRoi = null;
+        let mousePos = { x: 0, y: 0 }, mouseImgPos = { x: 0, y: 0 };
+        let tempRoi = null;
+        let lastPaintPos = null;
+
+        let fillPreviewActive = false;
+        let fillSeed = null;
+        let fillTargetType = 255;
+        let fillYellowCanvas = document.createElement('canvas');
+        let compMaskData = null;
+        let lastFillMaskData = null;
+
+        let pipeTimer = null;
+        let isProcessing = false;
+        let pendingProcessLevel = 0;
+        let lastProcTime = 0;
+
+        // ================= UI 邏輯 =================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tool-' + mode).classList.add('active');
+            document.querySelectorAll('.cm-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('cm-' + mode).classList.add('active');
+            document.getElementById('contextMenu').style.display = 'none';
+            cancelFillPreview(); drawView();
+        }
+
+        function updateResultColor() {
+            let resultText = document.getElementById('voidResult').innerText;
+            let r = parseFloat(resultText.replace("Void rate : ", ""));
+            let l = parseFloat(document.getElementById('slLimit').value);
+            document.getElementById('voidResult').className = (r > l) ? "void-rate danger" : "void-rate";
+        }
+
+        function clearUserMask() {
+            if (!img.src) return;
+            userMaskCtx.clearRect(0, 0, userMaskCtx.canvas.width, userMaskCtx.canvas.height);
+            let accC = document.getElementById('canvasAccumulatedMask');
+            if (accC) accC.getContext('2d').clearRect(0, 0, accC.width, accC.height);
+            triggerPipeline(3);
+        }
+
+        // ================= 檔案載入優化區塊 =================
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            let file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('status').innerText = "⏳ 讀取記憶體中...";
+            document.getElementById('status').style.color = "#d7ba7d";
+
+            if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            img.src = URL.createObjectURL(file);
+        });
+
+        img.onload = function () {
+            if (isProjectLoading) return;
+            const MAX_SIZE = 1000;
+            let scale = 1;
+            if (img.width > MAX_SIZE || img.height > MAX_SIZE) {
+                scale = Math.min(MAX_SIZE / img.width, MAX_SIZE / img.height);
+            }
+            let w = Math.floor(img.width * scale);
+            let h = Math.floor(img.height * scale);
+
+            let canvasRaw = document.getElementById('canvasImgRaw');
+            canvasRaw.width = w; canvasRaw.height = h;
+            canvasRaw.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, w, h);
+
+            document.getElementById('canvasUserMask').width = w;
+            document.getElementById('canvasUserMask').height = h;
+            document.getElementById('canvasAccumulatedMask').width = w;
+            document.getElementById('canvasAccumulatedMask').height = h;
+
+            let view = document.getElementById('viewCanvas');
+            let wrapper = document.getElementById('canvasWrapper');
+            view.width = wrapper.clientWidth; view.height = wrapper.clientHeight;
+
+            let sX = view.width / w; let sY = view.height / h;
+            transform.scale = Math.min(sX, sY) * 0.9;
+            transform.x = (view.width - w * transform.scale) / 2;
+            transform.y = (view.height - h * transform.scale) / 2;
+
+            roi = { x: 0, y: 0, w: w, h: h };
+
+            if (matRaw) matRaw.delete();
+            matRaw = cv.imread(canvasRaw);
+            clearUserMask(); triggerPipeline(1);
+        };
+
+        window.addEventListener('resize', () => {
+            let wrapper = document.getElementById('canvasWrapper');
+            let view = document.getElementById('viewCanvas');
+            view.width = wrapper.clientWidth; view.height = wrapper.clientHeight;
+            drawView();
+        });
+
+        // ================= 滑鼠事件與操控 =================
+        function getImgCoords(e) {
+            let rect = document.getElementById('viewCanvas').getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left - transform.x) / transform.scale,
+                y: (e.clientY - rect.top - transform.y) / transform.scale
+            };
+        }
+
+        document.getElementById('canvasWrapper').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (fillPreviewActive) { cancelFillPreview(); return; }
+            let cm = document.getElementById('contextMenu');
+            cm.style.display = 'block'; cm.style.left = e.pageX + 'px'; cm.style.top = e.pageY + 'px';
+        });
+
+        document.addEventListener('mousedown', (e) => {
+            if (e.button !== 2 && !e.target.closest('#contextMenu')) {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+        });
+
+        document.getElementById('viewCanvas').addEventListener('wheel', (e) => {
+            if (!img.src) return;
+            e.preventDefault();
+
+            if (mode === 'fill' && fillPreviewActive) {
+                let sl = document.getElementById('slFillTol');
+                sl.value = Math.max(0, Math.min(100, parseInt(sl.value) + (e.deltaY < 0 ? 2 : -2)));
+                document.getElementById('vFillTol').innerText = sl.value;
+                updateFillPreview(); return;
+            }
+            if (mode === 'draw' || mode === 'erase') {
+                let sl = document.getElementById('slBrush');
+                sl.value = Math.max(1, Math.min(100, parseInt(sl.value) + (e.deltaY < 0 ? 2 : -2)));
+                document.getElementById('vBrush').innerText = sl.value;
+                drawView(); return;
+            }
+
+            const sf = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            let rect = document.getElementById('viewCanvas').getBoundingClientRect();
+            let mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            transform.x = mx - (mx - transform.x) * sf;
+            transform.y = my - (my - transform.y) * sf;
+            transform.scale *= sf;
+
+            transform.scale = Math.max(0.1, Math.min(10.0, transform.scale));
+            document.getElementById('slZoom').value = transform.scale;
+            document.getElementById('vZoom').innerText = transform.scale.toFixed(1);
+
+            drawView();
+        });
+
+        document.getElementById('viewCanvas').addEventListener('mousedown', (e) => {
+            if (!img.src || e.button === 2) return;
+            isDragging = true;
+            let rect = document.getElementById('viewCanvas').getBoundingClientRect();
+            mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            mouseImgPos = getImgCoords(e);
+
+            dragStartScreen = { x: mousePos.x, y: mousePos.y, imgX: mouseImgPos.x, imgY: mouseImgPos.y };
+
+            if (e.button === 1 || mode === 'pan') {
+                e.preventDefault(); dragMode = 'pan'; dragStartTransform = { ...transform };
+            }
+            else if (mode === 'roi') {
+                let currentW = document.getElementById('canvasImgRaw').width;
+                let currentH = document.getElementById('canvasImgRaw').height;
+                let isFullImg = roi && (roi.w >= currentW * 0.95 && roi.h >= currentH * 0.95);
+                let hr = 20 / transform.scale;
+                let isResize = roi && !isFullImg && (mouseImgPos.x >= roi.x + roi.w - hr && mouseImgPos.x <= roi.x + roi.w + hr && mouseImgPos.y >= roi.y + roi.h - hr && mouseImgPos.y <= roi.y + roi.h + hr);
+
+                if (isResize) {
+                    dragMode = 'resize'; dragStartRoi = { ...roi };
+                } else if (roi && !isFullImg && mouseImgPos.x >= roi.x && mouseImgPos.x <= roi.x + roi.w && mouseImgPos.y >= roi.y && mouseImgPos.y <= roi.y + roi.h) {
+                    dragMode = 'move'; dragStartRoi = { ...roi };
+                } else {
+                    dragMode = 'drawRoi'; tempRoi = { x1: mouseImgPos.x, y1: mouseImgPos.y, x2: mouseImgPos.x, y2: mouseImgPos.y };
+                }
+            }
+            else if (mode === 'draw' || mode === 'erase') {
+                dragMode = 'paint';
+                lastPaintPos = { x: mouseImgPos.x, y: mouseImgPos.y };
+                applyBrush(mouseImgPos, lastPaintPos);
+                triggerPipeline(3, true);
+            }
+            else if (mode === 'fill') {
+                if (fillPreviewActive) commitFill(); else startFillPreview(mouseImgPos);
+            }
+        });
+
+        document.getElementById('viewCanvas').addEventListener('mousemove', (e) => {
+            if (!img.src) return;
+            let rect = document.getElementById('viewCanvas').getBoundingClientRect();
+            mousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            mouseImgPos = getImgCoords(e);
+
+            let cur = 'crosshair';
+            if (mode === 'pan') cur = isDragging ? 'grabbing' : 'grab';
+            else if (mode === 'roi') {
+                let currentW = document.getElementById('canvasImgRaw').width;
+                let currentH = document.getElementById('canvasImgRaw').height;
+                let isFullImg = roi && (roi.w >= currentW * 0.95 && roi.h >= currentH * 0.95);
+                let hr = 20 / transform.scale;
+                let isResize = roi && !isFullImg && (mouseImgPos.x >= roi.x + roi.w - hr && mouseImgPos.x <= roi.x + roi.w + hr && mouseImgPos.y >= roi.y + roi.h - hr && mouseImgPos.y <= roi.y + roi.h + hr);
+                if (isResize) cur = 'se-resize';
+                else if (roi && !isFullImg && mouseImgPos.x >= roi.x && mouseImgPos.x <= roi.x + roi.w && mouseImgPos.y >= roi.y && mouseImgPos.y <= roi.y + roi.h) cur = 'move';
+            }
+            else if (mode === 'draw' || mode === 'erase' || mode === 'fill') cur = 'none';
+            document.getElementById('viewCanvas').style.cursor = cur;
+
+            if (isDragging) {
+                if (dragMode === 'pan') {
+                    transform.x = dragStartTransform.x + (mousePos.x - dragStartScreen.x);
+                    transform.y = dragStartTransform.y + (mousePos.y - dragStartScreen.y);
+                }
+                else if (dragMode === 'resize') {
+                    roi.w = Math.max(10, mouseImgPos.x - roi.x);
+                    roi.h = Math.max(10, mouseImgPos.y - roi.y);
+                    triggerPipeline(4, true);
+                }
+                else if (dragMode === 'move') {
+                    let dx = mouseImgPos.x - dragStartScreen.imgX;
+                    let dy = mouseImgPos.y - dragStartScreen.imgY;
+                    roi.x = dragStartRoi.x + dx; roi.y = dragStartRoi.y + dy;
+                    triggerPipeline(4, true);
+                }
+                else if (dragMode === 'drawRoi') {
+                    tempRoi.x2 = mouseImgPos.x; tempRoi.y2 = mouseImgPos.y;
+                }
+                else if (dragMode === 'paint') {
+                    applyBrush(mouseImgPos, lastPaintPos);
+                    lastPaintPos = { x: mouseImgPos.x, y: mouseImgPos.y };
+                    triggerPipeline(3, true);
+                }
+            }
+            drawView();
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            if (dragMode === 'move' || dragMode === 'resize' || dragMode === 'drawRoi') {
+                if (dragMode === 'drawRoi' && tempRoi) {
+                    let rx = Math.min(tempRoi.x1, tempRoi.x2), ry = Math.min(tempRoi.y1, tempRoi.y2);
+                    let rw = Math.abs(tempRoi.x1 - tempRoi.x2), rh = Math.abs(tempRoi.y1 - tempRoi.y2);
+                    if (rw > 10 && rh > 10) roi = { x: rx, y: ry, w: rw, h: rh };
+                    tempRoi = null;
+                }
+                if (roi && roi.w > 10 && roi.h > 10) triggerPipeline(4);
+            }
+            else if (dragMode === 'paint') {
+                lastPaintPos = null;
+            }
+            dragMode = null; drawView();
+        });
+
+        document.getElementById('viewCanvas').addEventListener('mouseout', () => { mouseImgPos = null; drawView(); });
+
+        function applyBrush(ic, lastPos) {
+            let bs = parseInt(document.getElementById('slBrush').value);
+
+            userMaskCtx.fillStyle = (mode === 'draw') ? 'rgba(255,255,255,1)' : 'rgba(128,128,128,1)';
+            userMaskCtx.beginPath(); userMaskCtx.arc(ic.x, ic.y, bs, 0, Math.PI * 2); userMaskCtx.fill();
+            if (lastPos && (lastPos.x !== ic.x || lastPos.y !== ic.y)) {
+                userMaskCtx.strokeStyle = (mode === 'draw') ? 'rgba(255,255,255,1)' : 'rgba(128,128,128,1)';
+                userMaskCtx.lineCap = 'round'; userMaskCtx.lineJoin = 'round'; userMaskCtx.lineWidth = bs * 2;
+                userMaskCtx.beginPath(); userMaskCtx.moveTo(lastPos.x, lastPos.y); userMaskCtx.lineTo(ic.x, ic.y); userMaskCtx.stroke();
+            }
+        }
+
+        // ================= 智慧油漆桶 BFS =================
+        function startFillPreview(ic) {
+            if (!matPreprocessed || !compMaskData || !roi) return;
+            let rx = Math.round(ic.x), ry = Math.round(ic.y);
+            if (rx < roi.x || rx >= roi.x + roi.w || ry < roi.y || ry >= roi.y + roi.h) return;
+
+            let lx = rx - Math.floor(roi.x), ly = ry - Math.floor(roi.y);
+            let compVal = compMaskData[ly * Math.floor(roi.w) + lx];
+            fillTargetType = (compVal > 128) ? 128 : 255;
+            fillSeed = { x: lx, y: ly, gX: rx, gY: ry };
+            fillPreviewActive = true;
+            updateFillPreview();
+        }
+
+        function updateFillPreview() {
+            if (!fillPreviewActive || !fillSeed) return;
+            let w = Math.floor(roi.w), h = Math.floor(roi.h);
+            let tol = parseInt(document.getElementById('slFillTol').value);
+
+            let rX = Math.floor(roi.x), rY = Math.floor(roi.y);
+            let bgData = bgCanvas.getContext('2d', { willReadFrequently: true }).getImageData(rX, rY, w, h).data;
+
+            let mask = new Uint8Array(w * h); let queue = new Int32Array(w * h);
+            let head = 0, tail = 0;
+            let startIdx = fillSeed.y * w + fillSeed.x;
+            let targetColor = bgData[startIdx * 4];
+
+            queue[tail++] = startIdx; mask[startIdx] = 1;
+
+            while (head < tail) {
+                let p = queue[head++];
+                let x = p % w, y = Math.floor(p / w);
+                let nbs = [p - 1, p + 1, p - w, p + w];
+                if (x === 0) nbs[0] = -1; if (x === w - 1) nbs[1] = -1;
+
+                for (let i = 0; i < 4; i++) {
+                    let n = nbs[i];
+                    if (n >= 0 && n < mask.length && mask[n] === 0) {
+                        if (Math.abs(bgData[n * 4] - targetColor) <= tol) { mask[n] = 1; queue[tail++] = n; }
+                    }
+                }
+            }
+            fillYellowCanvas.width = w; fillYellowCanvas.height = h;
+            let yCtx = fillYellowCanvas.getContext('2d');
+            let imgD = yCtx.createImageData(w, h);
+            for (let i = 0, j = 0; i < mask.length; i++, j += 4) {
+                if (mask[i]) { imgD.data[j] = 255; imgD.data[j + 1] = 255; imgD.data[j + 3] = 150; }
+            }
+            yCtx.putImageData(imgD, 0, 0); drawView();
+        }
+
+        function commitFill() {
+            if (!fillPreviewActive || !fillYellowCanvas) return;
+            let w = Math.floor(roi.w), h = Math.floor(roi.h);
+
+            lastFillMaskData = userMaskCtx.getImageData(0, 0, userMaskCtx.canvas.width, userMaskCtx.canvas.height);
+
+            let yData = fillYellowCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+
+            let tmpC = document.createElement('canvas'); tmpC.width = w; tmpC.height = h;
+            let tCtx = tmpC.getContext('2d');
+            let imgD = tCtx.createImageData(w, h);
+
+            for (let i = 0; i < yData.length; i += 4) {
+                if (yData[i + 3] > 0) {
+                    imgD.data[i] = fillTargetType;
+                    imgD.data[i + 1] = fillTargetType;
+                    imgD.data[i + 2] = fillTargetType;
+                    imgD.data[i + 3] = 255;
+                }
+            }
+            tCtx.putImageData(imgD, 0, 0);
+            userMaskCtx.drawImage(tmpC, Math.floor(roi.x), Math.floor(roi.y));
+
+            cancelFillPreview(); triggerPipeline(3);
+        }
+
+        function cancelFillPreview() {
+            fillPreviewActive = false; fillSeed = null; drawView();
+        }
+
+        function accumulateMask() {
+            if (!compMaskData || !roi) return;
+            let rX = Math.floor(roi.x), rY = Math.floor(roi.y);
+            let rW = Math.floor(roi.w), rH = Math.floor(roi.h);
+
+            let accCanvas = document.getElementById('canvasAccumulatedMask');
+            let ctx = accCanvas.getContext('2d');
+
+            let tmpC = document.createElement('canvas');
+            tmpC.width = rW; tmpC.height = rH;
+            let tmpCtx = tmpC.getContext('2d');
+            let imgD = tmpCtx.createImageData(rW, rH);
+            for (let i = 0; i < compMaskData.length; i++) {
+                let v = compMaskData[i];
+                imgD.data[i * 4] = v; imgD.data[i * 4 + 1] = v; imgD.data[i * 4 + 2] = v; imgD.data[i * 4 + 3] = 255;
+            }
+            tmpCtx.putImageData(imgD, 0, 0);
+
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(tmpC, rX, rY);
+            triggerPipeline(3);
+            document.getElementById('status').innerText = "✔️ Mask Accumulated";
+        }
+
+        // ================= 核心防崩潰 AI 引擎 =================
+        function triggerPipeline(level, instant = false, isSliderDrag = false) {
+            if (!matPreprocessed && level > 1) return;
+            if (instant) {
+                let now = Date.now();
+                if (now - lastProcTime > 30 && !isProcessing) {
+                    isProcessing = true;
+                    requestAnimationFrame(() => {
+                        executePipeline(level, isSliderDrag);
+                        lastProcTime = Date.now();
+                        isProcessing = false;
+                        if (pendingProcessLevel > 0) {
+                            let p = pendingProcessLevel; pendingProcessLevel = 0;
+                            setTimeout(() => { triggerPipeline(p, true, isSliderDrag); }, 10);
+                        }
+                    });
+                } else { pendingProcessLevel = pendingProcessLevel > 0 ? Math.min(pendingProcessLevel, level) : level; }
+                return;
+            }
+            document.getElementById('status').innerText = "⚙️ 運算中..."; document.getElementById('status').style.color = "#d7ba7d";
+            if (pipeTimer) clearTimeout(pipeTimer);
+            pipeTimer = setTimeout(() => { executePipeline(level, false); }, 50);
+        }
+
+        function executePipeline(startLevel, usePaddedRoi = false) {
+            if (!matRaw || !roi) return;
+            let mats = []; function cM() { let m = new cv.Mat(); mats.push(m); return m; }
+            try {
+                if (startLevel <= 1) {
+                    if (matPreprocessed) matPreprocessed.delete();
+                    matPreprocessed = new cv.Mat();
+                    cv.cvtColor(matRaw, matPreprocessed, cv.COLOR_RGBA2GRAY, 0);
+
+                    if (document.getElementById('chkInv').checked) cv.bitwise_not(matPreprocessed, matPreprocessed);
+
+                    if (document.getElementById('chkClahe').checked) {
+                        let claheLimit = parseFloat(document.getElementById('slClahe').value);
+                        let tile = new cv.Size(8, 8); mats.push(tile);
+                        let clahe = new cv.CLAHE(claheLimit, tile); mats.push(clahe);
+                        clahe.apply(matPreprocessed, matPreprocessed);
+                    }
+
+                    let d = parseInt(document.getElementById('slDestripe').value);
+                    if (d > 0) {
+                        let tmp = cM();
+                        let k = (d * 2) + 1;
+                        cv.medianBlur(matPreprocessed, tmp, k);
+                        tmp.copyTo(matPreprocessed);
+                    }
+
+                    let sharp = parseFloat(document.getElementById('slSharp').value);
+                    if (sharp > 0) {
+                        let blur = cM(); cv.GaussianBlur(matPreprocessed, blur, new cv.Size(0, 0), 2.0);
+                        cv.addWeighted(matPreprocessed, 1.0 + sharp, blur, -sharp, 0, matPreprocessed);
+                    }
+
+                    let alpha = parseFloat(document.getElementById('slAlpha').value);
+                    matPreprocessed.convertTo(matPreprocessed, -1, alpha, 0);
+
+                    let gamma = parseFloat(document.getElementById('slGamma').value);
+                    if (gamma !== 1.0) {
+                        let data = matPreprocessed.data; let lut = new Uint8Array(256);
+                        for (let i = 0; i < 256; i++) lut[i] = Math.pow(i / 255.0, 1.0 / gamma) * 255;
+                        for (let i = 0; i < data.length; i++) data[i] = lut[data[i]];
+                    }
+
+                    let disp = cM(); cv.cvtColor(matPreprocessed, disp, cv.COLOR_GRAY2RGBA);
+                    bgCanvas.width = disp.cols; bgCanvas.height = disp.rows;
+                    bgCanvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(disp.data), disp.cols, disp.rows), 0, 0);
+                }
+
+                let rX = Math.max(0, Math.floor(roi.x)), rY = Math.max(0, Math.floor(roi.y));
+                let rW = Math.min(matPreprocessed.cols - rX, Math.floor(roi.w)), rH = Math.min(matPreprocessed.rows - rY, Math.floor(roi.h));
+                if (rW <= 10 || rH <= 10) return;
+
+                let pX = 0, pY = 0, pW = matPreprocessed.cols, pH = matPreprocessed.rows;
+                if (usePaddedRoi) {
+                    let pad = 60;
+                    pX = Math.max(0, rX - pad);
+                    pY = Math.max(0, rY - pad);
+                    pW = Math.min(matPreprocessed.cols - pX, rW + (rX - pX) + pad);
+                    pH = Math.min(matPreprocessed.rows - pY, rH + (rY - pY) + pad);
+                }
+                let pRect = new cv.Rect(pX, pY, pW, pH);
+
+                if (startLevel <= 2) {
+                    let mBase = cv.Mat.zeros(pH, pW, cv.CV_8UC1); mats.push(mBase);
+
+                    let roiSrc = matPreprocessed.roi(pRect); mats.push(roiSrc);
+                    let kSize = parseInt(document.getElementById('slKernel').value); if (kSize % 2 === 0) kSize++;
+                    let kernelBh = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(kSize, kSize)); mats.push(kernelBh);
+                    let ext = cM(); cv.morphologyEx(roiSrc, ext, cv.MORPH_BLACKHAT, kernelBh);
+
+                    let mSize = parseInt(document.getElementById('slMorph').value);
+                    if (mSize > 0) {
+                        let d = Math.min(15, mSize * 2 + 1);
+                        let tmp = cM();
+                        try {
+                            cv.bilateralFilter(ext, tmp, d, d * 3, d * 3);
+                        } catch (e) {
+                            cv.medianBlur(ext, tmp, d);
+                        }
+                        tmp.copyTo(ext);
+                    }
+
+                    let thresh = parseInt(document.getElementById('slThresh').value);
+
+                    if (document.getElementById('chkOtsu').checked) {
+                        let tmp = cM(); cv.threshold(ext, tmp, thresh, 255, cv.THRESH_BINARY);
+                        cv.bitwise_or(mBase, tmp, mBase);
+                    }
+                    if (document.getElementById('chkCanny').checked) {
+                        let edges = cM(); cv.Canny(ext, edges, Math.max(5, thresh), Math.max(15, thresh * 2));
+                        let cm = parseInt(document.getElementById('slCannyM').value); let kc = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(cm, cm)); mats.push(kc);
+                        cv.morphologyEx(edges, edges, cv.MORPH_CLOSE, kc); cv.bitwise_or(mBase, edges, mBase);
+                    }
+                    if (document.getElementById('chkAdapt').checked) {
+                        let blr = cM(); cv.medianBlur(ext, blr, 7);
+                        let tmp = cM(); cv.adaptiveThreshold(blr, tmp, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 25, parseInt(document.getElementById('slAdaptC').value));
+                        cv.bitwise_or(mBase, tmp, mBase);
+                    }
+
+                    if (document.getElementById('chkCanny').checked || document.getElementById('chkAdapt').checked) {
+                        let kc = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3)); mats.push(kc);
+                        cv.morphologyEx(mBase, mBase, cv.MORPH_OPEN, kc);
+                    }
+
+                    baseThreshData = new Uint8Array(mBase.data);
+                    baseThreshW = pW;
+                    baseThreshH = pH;
+                }
+
+                if (startLevel <= 3) {
+                    if (!baseThreshData) return;
+
+                    let currentData = new Uint8Array(baseThreshData);
+                    let mAI = cM(); mAI.create(baseThreshH, baseThreshW, cv.CV_8UC1); mAI.data.set(currentData);
+
+                    let gap = parseInt(document.getElementById('slGap').value);
+                    if (gap > 0) {
+                        let kg = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(gap % 2 === 0 ? gap + 1 : gap, gap % 2 === 0 ? gap + 1 : gap)); mats.push(kg);
+                        cv.morphologyEx(mAI, mAI, cv.MORPH_CLOSE, kg);
+                    }
+
+                    let fCnts = new cv.MatVector(), fHier = new cv.Mat(); mats.push(fCnts, fHier);
+                    cv.findContours(mAI, fCnts, fHier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                    let mValidBlobs = cv.Mat.zeros(baseThreshH, baseThreshW, cv.CV_8UC1); mats.push(mValidBlobs);
+
+                    let minArea = parseFloat(document.getElementById('slArea').value);
+                    let minCirc = parseFloat(document.getElementById('slCirc').value);
+
+                    for (let i = 0; i < fCnts.size(); ++i) {
+                        let cnt = fCnts.get(i);
+                        let area = cv.contourArea(cnt);
+                        if (area < minArea) continue;
+                        let peri = cv.arcLength(cnt, true);
+                        if (peri === 0) continue;
+                        if ((4 * Math.PI * area) / (peri * peri) >= minCirc) {
+                            cv.drawContours(mValidBlobs, fCnts, i, new cv.Scalar(255, 255, 255, 255), -1, 8, fHier, 0);
+                        }
+                    }
+
+                    let mFilteredGlobal = cM();
+                    cv.bitwise_and(mAI, mValidBlobs, mFilteredGlobal);
+
+                    let userFull = cv.imread(document.getElementById('canvasUserMask')); mats.push(userFull);
+                    let uRoi = userFull.roi(pRect); mats.push(uRoi);
+                    let uGray = cM(); cv.cvtColor(uRoi, uGray, cv.COLOR_RGBA2GRAY, 0);
+
+                    let uAdd = cM(); cv.threshold(uGray, uAdd, 240, 255, cv.THRESH_BINARY);
+                    let tmp1 = cM(); cv.threshold(uGray, tmp1, 100, 255, cv.THRESH_BINARY);
+                    let tmp2 = cM(); cv.threshold(uGray, tmp2, 150, 255, cv.THRESH_BINARY_INV);
+                    let uSub = cM(); cv.bitwise_and(tmp1, tmp2, uSub);
+
+                    // 疊加已累加的遮罩
+                    let accFull = cv.imread(document.getElementById('canvasAccumulatedMask')); mats.push(accFull);
+                    let accRoi = accFull.roi(pRect); mats.push(accRoi);
+                    let accGray = cM(); cv.cvtColor(accRoi, accGray, cv.COLOR_RGBA2GRAY, 0);
+                    cv.bitwise_or(mFilteredGlobal, accGray, mFilteredGlobal);
+
+                    cv.bitwise_or(mFilteredGlobal, uAdd, mFilteredGlobal);
+                    cv.bitwise_not(uSub, uSub);
+                    cv.bitwise_and(mFilteredGlobal, uSub, mFilteredGlobal);
+
+                    if (document.getElementById('chkSolid').checked) {
+                        let sCnts = new cv.MatVector(), sHier = new cv.Mat(); mats.push(sCnts, sHier);
+                        cv.findContours(mFilteredGlobal, sCnts, sHier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                        cv.drawContours(mFilteredGlobal, sCnts, -1, new cv.Scalar(255), cv.FILLED, 8, sHier, 0);
+                    }
+
+                    globalFilteredData = new Uint8Array(mFilteredGlobal.data);
+                    globalIsPadded = usePaddedRoi;
+                    globalPadX = pX; globalPadY = pY;
+                    globalPadW = pW; globalPadH = pH;
+                }
+
+                if (startLevel <= 4) {
+                    if (!globalFilteredData) return;
+
+                    let cX = rX - globalPadX;
+                    let cY = rY - globalPadY;
+                    if (cX < 0 || cY < 0 || cX + rW > globalPadW || cY + rH > globalPadH) {
+                        triggerPipeline(2);
+                        return;
+                    }
+                    let cropRect = new cv.Rect(cX, cY, rW, rH);
+
+                    let mGlobal = cM(); mGlobal.create(globalPadH, globalPadW, cv.CV_8UC1); mGlobal.data.set(new Uint8Array(globalFilteredData));
+                    let mFiltered = cM(); mGlobal.roi(cropRect).copyTo(mFiltered);
+
+                    compMaskData = new Uint8Array(mFiltered.data);
+
+                    let lCnts = new cv.MatVector(), lHier = new cv.Mat(); mats.push(lCnts, lHier);
+                    cv.findContours(mFiltered, lCnts, lHier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+                    let colorMat = new cv.Mat(rH, rW, cv.CV_8UC4, new cv.Scalar(0, 0, 0, 0)); mats.push(colorMat);
+                    voidLabels = [];
+                    let totalPxs = cv.countNonZero(mFiltered);
+
+                    for (let i = 0; i < lCnts.size(); ++i) {
+                        let cnt = lCnts.get(i);
+                        let M = cv.moments(cnt, false);
+                        if (M.m00 > 0) voidLabels.push({ area: M.m00, cx: M.m10 / M.m00, cy: M.m01 / M.m00 });
+                    }
+                    voidLabels.sort((a, b) => b.area - a.area);
+
+                    let outData = colorMat.data;
+                    let inData = mFiltered.data;
+                    for (let i = 0, j = 0; i < inData.length; i++, j += 4) {
+                        if (inData[i] > 0) {
+                            outData[j] = 255;
+                            outData[j + 1] = 0;
+                            outData[j + 2] = 0;
+                            outData[j + 3] = 255;
+                        }
+                    }
+
+                    resultCanvas.width = rW; resultCanvas.height = rH;
+                    resultCanvas.getContext('2d', { willReadFrequently: true }).putImageData(new ImageData(new Uint8ClampedArray(colorMat.data), rW, rH), 0, 0);
+
+                    lastDrawnRoi = { x: rX, y: rY };
+                    currentVoidRate = (totalPxs / (rW * rH)) * 100 || 0;
+
+                    document.getElementById('voidResult').innerText = getTxt('void_lbl').replace("{0:.2f}", currentVoidRate.toFixed(2));
+
+                    updateResultColor(); drawView();
+                    document.getElementById('status').innerText = getTxt('status_ready'); document.getElementById('status').style.color = "#89d185";
+                }
+
+            } catch (e) {
+                console.error("Pipeline Error:", e); document.getElementById('status').innerText = getTxt('status_error'); document.getElementById('status').style.color = "#f14c4c";
+            } finally { mats.forEach(m => { try { m.delete(); } catch (err) { } }); }
+        }
+
+        // ================= 其他功能 =================
+        function autoHeuristicSearch() {
+            if (!isCvReady || !roi || !matPreprocessed) return;
+            document.getElementById('status').innerText = getTxt('status_ai_busy');
+            let mats = [];
+            try {
+                let rX = Math.max(0, Math.floor(roi.x)), rY = Math.max(0, Math.floor(roi.y));
+                let rW = Math.min(matPreprocessed.cols - rX, Math.floor(roi.w)), rH = Math.min(matPreprocessed.rows - rY, Math.floor(roi.h));
+                if (rW <= 10 || rH <= 10) {
+                    document.getElementById('status').innerText = getTxt('status_ready');
+                    document.getElementById('status').style.color = "#89d185";
+                    return;
+                }
+                let rect = new cv.Rect(rX, rY, rW, rH);
+
+                let roiSrc = matPreprocessed.roi(rect).clone(); mats.push(roiSrc);
+                let ext = new cv.Mat(), blr = new cv.Mat(), mask = new cv.Mat(); mats.push(ext); mats.push(blr); mats.push(mask);
+
+                let ks = parseInt(document.getElementById('slKernel').value); if (ks % 2 === 0) ks++;
+                let kbh = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(ks, ks)); mats.push(kbh);
+                cv.morphologyEx(roiSrc, ext, cv.MORPH_BLACKHAT, kbh);
+
+                try {
+                    cv.bilateralFilter(ext, blr, 9, 30, 30);
+                } catch (e) {
+                    cv.medianBlur(ext, blr, 9);
+                }
+
+                let otsu = 15;
+                try {
+                    let typeOtsu = cv.THRESH_OTSU || 8;
+                    otsu = cv.threshold(blr, mask, 0, 255, cv.THRESH_BINARY | typeOtsu);
+                } catch (err) {
+                    console.warn("Otsu failed, fallback to 15");
+                }
+
+                let best = Math.min(100, Math.max(1, Math.floor(otsu * 0.85)));
+
+                document.getElementById('chkOtsu').checked = true;
+                document.getElementById('slThresh').value = best; document.getElementById('vThresh').innerText = best;
+                document.getElementById('slMorph').value = 2; document.getElementById('vMorph').innerText = 2;
+                document.getElementById('slArea').value = 10; document.getElementById('vArea').innerText = 10;
+                document.getElementById('slCirc').value = 0.15; document.getElementById('vCirc').innerText = "0.15";
+
+                triggerPipeline(2);
+            } catch (e) {
+                let msg = e;
+                try { if (typeof e === 'number') msg = cv.exceptionFromPtr(e).msg; } catch (err) { }
+                console.error("AutoHeuristic Error:", msg);
+                document.getElementById('status').innerText = getTxt('status_ai_fail') + msg;
+                document.getElementById('status').style.color = "#f14c4c";
+            } finally { mats.forEach(m => { try { m.delete(); } catch (err) { } }); }
+        }
+
+        // ================= 終極渲染器 =================
+        function drawView() {
+            let view = document.getElementById('viewCanvas');
+            let ctx = view.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, view.width, view.height);
+            if (!img.src) return;
+
+            ctx.save();
+            ctx.translate(transform.x, transform.y);
+            ctx.scale(transform.scale, transform.scale);
+
+            let baseImageSource = bgCanvas.width > 0 ? bgCanvas : document.getElementById('canvasImgRaw');
+            ctx.drawImage(baseImageSource, 0, 0);
+
+            if (document.getElementById('chkShowMask').checked && resultCanvas.width > 0 && lastDrawnRoi && !fillPreviewActive) {
+                ctx.globalAlpha = parseFloat(document.getElementById('slOpacity').value);
+                ctx.drawImage(resultCanvas, lastDrawnRoi.x, lastDrawnRoi.y);
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (fillPreviewActive && fillYellowCanvas.width > 0 && roi) {
+                ctx.globalAlpha = parseFloat(document.getElementById('slOpacity').value);
+                ctx.drawImage(resultCanvas, lastDrawnRoi.x, lastDrawnRoi.y);
+
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(fillYellowCanvas, Math.floor(roi.x), Math.floor(roi.y));
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (document.getElementById('chkShowLabels').checked && voidLabels.length > 0 && lastDrawnRoi) {
+                let totalArea = roi.w * roi.h; let fs = 14 / transform.scale;
+                ctx.font = `bold ${fs}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                voidLabels.forEach((v, idx) => {
+                    let text = `${idx + 1}(${(v.area / totalArea * 100).toFixed(1)}%)`;
+                    let px = lastDrawnRoi.x + v.cx, py = lastDrawnRoi.y + v.cy;
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = 3 / transform.scale; ctx.strokeText(text, px, py);
+                    ctx.fillStyle = '#ff0'; ctx.fillText(text, px, py);
+                });
+            }
+
+            if (mode === 'roi') {
+                if (roi) {
+                    ctx.fillStyle = '#ff0'; let rSize = 10 / transform.scale;
+                    ctx.fillRect(roi.x + roi.w - rSize / 2, roi.y + roi.h - rSize / 2, rSize, rSize);
+                }
+                if (tempRoi) {
+                    let rw = Math.abs(tempRoi.x1 - tempRoi.x2), rh = Math.abs(tempRoi.y1 - tempRoi.y2);
+                    if (rw > 5 && rh > 5) {
+                        ctx.strokeStyle = '#0ff'; ctx.lineWidth = 2 / transform.scale; ctx.setLineDash([5 / transform.scale, 5 / transform.scale]);
+                        ctx.strokeRect(Math.min(tempRoi.x1, tempRoi.x2), Math.min(tempRoi.y1, tempRoi.y2), rw, rh);
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            if (roi) {
+                ctx.strokeStyle = '#89d185'; ctx.lineWidth = 2 / transform.scale;
+                ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+            }
+
+            ctx.restore();
+
+            if (mousePos && mouseImgPos && !isDragging) {
+                ctx.beginPath();
+                if (mode === 'pan') {
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+                    ctx.moveTo(mousePos.x - 8, mousePos.y); ctx.lineTo(mousePos.x + 8, mousePos.y);
+                    ctx.moveTo(mousePos.x, mousePos.y - 8); ctx.lineTo(mousePos.x, mousePos.y + 8);
+                } else if (mode === 'roi') {
+                    let currentW = document.getElementById('canvasImgRaw').width;
+                    let currentH = document.getElementById('canvasImgRaw').height;
+                    let isFullImg = roi && (roi.w >= currentW * 0.95 && roi.h >= currentH * 0.95);
+                    let hr = 20 / transform.scale;
+                    let isResize = roi && !isFullImg && (mouseImgPos.x >= roi.x + roi.w - hr && mouseImgPos.x <= roi.x + roi.w + hr && mouseImgPos.y >= roi.y + roi.h - hr && mouseImgPos.y <= roi.y + roi.h + hr);
+                    if (!isResize) {
+                        ctx.strokeStyle = '#0ff'; ctx.lineWidth = 1;
+                        ctx.moveTo(mousePos.x - 12, mousePos.y); ctx.lineTo(mousePos.x + 12, mousePos.y);
+                        ctx.moveTo(mousePos.x, mousePos.y - 12); ctx.lineTo(mousePos.x, mousePos.y + 12);
+                    }
+                } else if (mode === 'draw' || mode === 'erase') {
+                    let bs = parseInt(document.getElementById('slBrush').value) * transform.scale;
+                    ctx.arc(mousePos.x, mousePos.y, bs, 0, Math.PI * 2);
+                    ctx.strokeStyle = mode === 'draw' ? '#ff0' : '#ff69b4'; ctx.lineWidth = 1.5;
+                } else if (mode === 'fill') {
+                    ctx.strokeStyle = '#0f0'; ctx.lineWidth = 2;
+                    ctx.moveTo(mousePos.x - 8, mousePos.y); ctx.lineTo(mousePos.x + 8, mousePos.y);
+                    ctx.moveTo(mousePos.x, mousePos.y - 8); ctx.lineTo(mousePos.x, mousePos.y + 8);
+                }
+                ctx.stroke();
+            }
+
+            if (fillPreviewActive && fillSeed) {
+                ctx.save(); ctx.translate(transform.x, transform.y); ctx.scale(transform.scale, transform.scale);
+                ctx.strokeStyle = '#f00'; ctx.lineWidth = 2 / transform.scale;
+                let sx = Math.floor(roi.x) + fillSeed.gX, sy = Math.floor(roi.y) + fillSeed.gY;
+                ctx.beginPath(); ctx.moveTo(sx - 10 / transform.scale, sy); ctx.lineTo(sx + 10 / transform.scale, sy);
+                ctx.moveTo(sx, sy - 10 / transform.scale); ctx.lineTo(sx, sy + 10 / transform.scale);
+                ctx.stroke(); ctx.restore();
+            }
+        }
+
+        // ================= 匯出報表功能 =================
+        function exportReport() {
+            if (!img.src || !roi || resultCanvas.width <= 0) {
+                alert(getTxt('load_warn_img'));
+                return;
+            }
+
+            let rX = Math.floor(roi.x), rY = Math.floor(roi.y);
+            let rW = Math.floor(roi.w), rH = Math.floor(roi.h);
+
+            let expCanvas = document.createElement('canvas');
+            let ctx = expCanvas.getContext('2d');
+
+            let now = new Date();
+            let dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
+            let textLine = `Void rate : ${currentVoidRate.toFixed(2)}%   ${dateStr}`;
+
+            let fontSize = Math.max(12, Math.floor(rW * 0.04));
+            ctx.font = `bold ${fontSize}px "Segoe UI", Tahoma, sans-serif`;
+            let textWidth = ctx.measureText(textLine).width;
+
+            if (textWidth > rW * 0.95) {
+                fontSize = Math.floor(fontSize * (rW * 0.95) / textWidth);
+            }
+
+            let finalW = rW;
+            if (fontSize < 12) {
+                fontSize = 12;
+                ctx.font = `bold ${fontSize}px "Segoe UI", Tahoma, sans-serif`;
+                finalW = Math.max(rW, Math.floor(ctx.measureText(textLine).width + 20));
+            }
+
+            let showWm = document.getElementById('chkWatermark').checked;
+            let footerHeight = showWm ? Math.floor(fontSize * 2.5) : 0;
+            expCanvas.width = finalW;
+            expCanvas.height = rH + footerHeight;
+
+            ctx.fillStyle = '#181818';
+            ctx.fillRect(0, 0, finalW, expCanvas.height);
+
+            let offsetX = Math.floor((finalW - rW) / 2);
+
+            let baseImg = bgCanvas.width > 0 ? bgCanvas : document.getElementById('canvasImgRaw');
+            ctx.drawImage(baseImg, rX, rY, rW, rH, offsetX, 0, rW, rH);
+
+            if (document.getElementById('chkShowMask').checked && resultCanvas.width > 0) {
+                ctx.globalAlpha = parseFloat(document.getElementById('slOpacity').value);
+                ctx.drawImage(resultCanvas, 0, 0, rW, rH, offsetX, 0, rW, rH);
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (document.getElementById('chkShowLabels').checked && voidLabels.length > 0) {
+                let totalArea = rW * rH;
+                ctx.font = `bold ${Math.max(10, fontSize * 0.8)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                voidLabels.forEach((v, idx) => {
+                    let text = `${idx + 1}(${(v.area / totalArea * 100).toFixed(1)}%)`;
+                    let px = offsetX + v.cx, py = v.cy;
+                    ctx.strokeStyle = '#000'; ctx.lineWidth = Math.max(2, fontSize * 0.1); ctx.strokeText(text, px, py);
+                    ctx.fillStyle = '#ff0'; ctx.fillText(text, px, py);
+                });
+            }
+
+            if (showWm) {
+                ctx.fillStyle = '#89d185';
+                ctx.font = `bold ${fontSize}px "Segoe UI", Tahoma, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(textLine, finalW / 2, rH + footerHeight / 2);
+            }
+
+            expCanvas.toBlob(async function (blob) {
+                let timeStamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+                let defaultName = `VoidReport_${timeStamp}.jpg`;
+
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: defaultName,
+                            types: [{
+                                description: 'JPEG Image',
+                                accept: { 'image/jpeg': ['.jpg', '.jpeg'] },
+                            }],
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                        alert(getTxt('export_success'));
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            console.error(err);
+                            alert(getTxt('save_fail_report') + err.message);
+                        }
+                    }
+                } else {
+                    let url = URL.createObjectURL(blob);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = defaultName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    setTimeout(() => alert(getTxt('export_success')), 100);
+                }
+            }, 'image/jpeg', 0.98);
+        }
+
+        function undoFill() {
+            if (lastFillMaskData) {
+                userMaskCtx.putImageData(lastFillMaskData, 0, 0);
+                lastFillMaskData = null;
+                triggerPipeline(3);
+            } else {
+                alert(getTxt('undo_warn'));
+            }
+        }
+
+        function setZoomFromSlider(val) {
+            let newSf = parseFloat(val);
+            if (!img.src) {
+                transform.scale = newSf;
+                return;
+            }
+            let view = document.getElementById('viewCanvas');
+            let mx = view.width / 2;
+            let my = view.height / 2;
+            let sf = newSf / transform.scale;
+            transform.x = mx - (mx - transform.x) * sf;
+            transform.y = my - (my - transform.y) * sf;
+            transform.scale = newSf;
+            drawView();
+        }
+
+        // 輔助函式：Canvas 轉 Gray Base64 PNG
+        function canvasToGrayBase64(canvasId) {
+            let src = cv.imread(canvasId);
+            let gray = new cv.Mat();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+            let tmpCanvas = document.createElement('canvas');
+            cv.imshow(tmpCanvas, gray);
+            let b64 = tmpCanvas.toDataURL("image/png").split(',')[1];
+            src.delete(); gray.delete();
+            return b64;
+        }
+
+        async function saveProject() {
+            if (!img.src) { alert(getTxt('save_warn_img')); return; }
+
+            const projData = {
+                'original_img': canvasToGrayBase64('canvasImgRaw'),
+                'user_mask': canvasToGrayBase64('canvasUserMask'),
+                'accumulated_base_mask': canvasToGrayBase64('canvasAccumulatedMask'),
+                'roi_pts': roi ? [[roi.x, roi.y], [roi.x + roi.w, roi.y + roi.h]] : [],
+                'zoom': parseFloat(document.getElementById('slZoom').value),
+                'sharpen': parseFloat(document.getElementById('slSharp').value),
+                'alpha': parseFloat(document.getElementById('slAlpha').value),
+                'gamma': parseFloat(document.getElementById('slGamma').value),
+                'bh_size': parseInt(document.getElementById('slKernel').value),
+                'bh_thresh': parseInt(document.getElementById('slThresh').value),
+                'morph': parseInt(document.getElementById('slMorph').value),
+                'area': parseFloat(document.getElementById('slArea').value),
+                'circ': parseFloat(document.getElementById('slCirc').value),
+                'opacity': parseFloat(document.getElementById('slOpacity').value),
+                'brush': parseInt(document.getElementById('slBrush').value),
+                'fill_gap': parseInt(document.getElementById('slGap').value),
+                'destripe': parseInt(document.getElementById('slDestripe').value),
+                'clahe_limit': parseFloat(document.getElementById('slClahe').value),
+                'solidify': document.getElementById('chkSolid').checked,
+                'show_mask': document.getElementById('chkShowMask').checked,
+                'save_watermark': document.getElementById('chkWatermark').checked,
+                'show_void_labels': document.getElementById('chkShowLabels').checked,
+                'invert_img': document.getElementById('chkInv').checked,
+                'use_clahe': document.getElementById('chkClahe').checked,
+                'tool_mode': mode.toUpperCase(),
+                'eng_otsu': document.getElementById('chkOtsu').checked,
+                'eng_canny': document.getElementById('chkCanny').checked,
+                'eng_adapt': document.getElementById('chkAdapt').checked,
+                'adapt_c': parseInt(document.getElementById('slAdaptC').value),
+                'canny_m': parseInt(document.getElementById('slCannyM').value),
+                'threshold': parseFloat(document.getElementById('slLimit').value),
+                'selecting_roi': false
+            };
+
+            const jsonStr = JSON.stringify(projData, null, 4);
+
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: 'project.vod',
+                        types: [{ description: 'VOD Project', accept: { 'application/json': ['.vod'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(jsonStr);
+                    await writable.close();
+                    alert(getTxt('save_success'));
+                } catch (e) { if (e.name !== 'AbortError') console.error(e); }
+            } else {
+                const blob = new Blob([jsonStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = "project.vod";
+                a.click();
+                alert(getTxt('save_success'));
+            }
+        }
+
+        function loadProject(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    isProjectLoading = true;
+
+                    // 輔助：Base64 轉 Canvas
+                    const b64ToCanvas = (b64, canvasId, cb) => {
+                        if (!b64) { cb(); return; }
+                        let i = new Image();
+                        i.onload = () => {
+                            let cvs = document.getElementById(canvasId);
+                            cvs.width = i.width; cvs.height = i.height;
+                            let ctx = cvs.getContext('2d');
+                            ctx.drawImage(i, 0, 0);
+                            cb();
+                        };
+                        i.src = "data:image/png;base64," + b64;
+                    };
+
+                    b64ToCanvas(data.original_img, 'canvasImgRaw', () => {
+                        let rawC = document.getElementById('canvasImgRaw');
+                        img.src = rawC.toDataURL(); // 為了保持同步，雖然 onload 被跳過，但 img.src 仍更新
+
+                        bgCanvas.width = rawC.width; bgCanvas.height = rawC.height;
+                        bgCanvas.getContext('2d').drawImage(rawC, 0, 0);
+
+                        b64ToCanvas(data.user_mask, 'canvasUserMask', () => {
+                            b64ToCanvas(data.accumulated_base_mask, 'canvasAccumulatedMask', () => {
+
+                                // 載入參數
+                                const pts = data.roi_pts || [];
+                                if (pts.length === 2) {
+                                    roi = { x: pts[0][0], y: pts[0][1], w: pts[1][0] - pts[0][0], h: pts[1][1] - pts[0][1] };
+                                } else { roi = null; }
+
+                                const setVal = (id, val) => { if (document.getElementById(id) && val !== undefined) { document.getElementById(id).value = val; let vEl = document.getElementById('v' + id.substring(2)); if (vEl) vEl.innerText = val; } };
+                                const setChk = (id, val) => { if (document.getElementById(id) && val !== undefined) { document.getElementById(id).checked = val; } };
+
+                                setVal('slZoom', data.zoom);
+                                setVal('slSharp', data.sharpen);
+                                setVal('slAlpha', data.alpha);
+                                setVal('slGamma', data.gamma);
+                                setVal('slKernel', data.bh_size);
+                                setVal('slThresh', data.bh_thresh);
+                                setVal('slMorph', data.morph);
+                                setVal('slArea', data.area);
+                                setVal('slCirc', data.circ);
+                                setVal('slOpacity', data.opacity);
+                                setVal('slBrush', data.brush);
+                                setVal('slGap', data.fill_gap);
+                                setVal('slDestripe', data.destripe);
+                                setVal('slClahe', data.clahe_limit);
+                                setChk('chkSolid', data.solidify);
+                                setChk('chkShowMask', data.show_mask);
+                                setChk('chkWatermark', data.save_watermark);
+                                setChk('chkShowLabels', data.show_void_labels);
+                                setChk('chkInv', data.invert_img);
+                                setChk('chkClahe', data.use_clahe);
+                                setChk('chkOtsu', data.eng_otsu);
+                                setChk('chkCanny', data.eng_canny);
+                                setChk('chkAdapt', data.eng_adapt);
+                                setVal('slAdaptC', data.adapt_c);
+                                setVal('slCannyM', data.canny_m);
+                                setVal('slLimit', data.threshold);
+
+                                if (data.zoom) {
+                                    transform.scale = parseFloat(data.zoom);
+                                    document.getElementById('vZoom').innerText = transform.scale.toFixed(1);
+                                }
+                                if (data.tool_mode) setMode(data.tool_mode.toLowerCase());
+
+                                // 恢復 matRaw 以供 pipeline 使用
+                                if (matRaw) matRaw.delete();
+                                matRaw = cv.imread(rawC);
+
+                                document.getElementById('status').innerText = getTxt('status_load_success');
+                                isProjectLoading = false;
+                                triggerPipeline(1);
+                            });
+                        });
+                    });
+                } catch (err) { isProjectLoading = false; alert(getTxt('load_fail') + err); }
+            };
+            reader.readAsText(file);
+            event.target.value = "";
+        }
+
+        let currentLang = 'zh-TW';
+
+        const I18N_DICT = {
+            "zh-TW": {
+                "m1": "📁 選擇圖檔", "m2": "📂 載入專案", "m3": "💾 儲存專案", "m4": "📊 匯出報表", "m5": "❓ 說明",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "影像", "t2": "氣泡", "t3": "編修",
+                "p1": "影像狀態與預處理", "p2": "智能氣泡檢測參數", "p3": "🔥 聯合檢測引擎", "p4": "檢視控制", "p5": "手動編修工具",
+                "l1": "正負片反轉", "l2": "強化對比 (CLAHE)", "l3": "條紋過濾 (De-stripe)", "l4": "畫面縮放 (Zoom)", "l5": "銳化增強 (Sharpen)", "l6": "亮度/對比 (Alpha)", "l7": "對比 Gamma",
+                "l8": "核心敏感度 (Kernel)", "l9": "雜訊平滑 (Morph)", "l10": "最小面積 (Min Area)", "l11": "最小圓形度 (Circularity)",
+                "l12": "🤖 自動最佳化", "l13": "➕ 鎖定並疊加",
+                "l14": "全局閥值 (Global Thresh)", "l15": "邊緣檢測 (Canny Edge)", "l16": "自適應檢測 (Adaptive)",
+                "l17": "顯示紅光遮罩", "l18": "顯示各氣泡編號與佔比", "l19": "氣泡實心化 (Solidify)", "l20": "遮罩透明度:",
+                "l21": "✋ 平移 (Pan)", "l22": "🎯 框選 (ROI)", "l23": "🖌️ 補點 (Draw)", "l24": "🧼 擦除 (Erase)", "l25": "🪣 智慧填滿 (Fill)",
+                "l26": "畫筆尺寸 (滾輪可調):", "l27": "斷點接合 (Gap Fill)", "l28": "填滿寬容度 (滾輪可調):",
+                "l29": "↩️ 復原油漆桶", "l30": "🗑️ 清空手動修改",
+                "l31": "報表加入浮水印 (Watermark)", "l32": "空洞判定門檻 (%):",
+                "rm_pan": "平移畫面", "rm_roi": "框選 / 縮放晶片", "rm_draw": "手動補點", "rm_erase": "手動擦除", "rm_fill": "智慧填滿 (油漆桶)",
+                "status_ready": "✔️ 就緒", "status_error": "⚠️ 運算錯誤", "status_ai_busy": "⌛ AI 分析中...", "status_ai_fail": "⚠️ AI 失敗: ", "status_load_success": "✔️ 專案載入成功",
+                "save_success": "✅ 專案已儲存 (.vod)，此檔案已包含影像與所有設定。", "export_success": "✅ 報表匯出成功！", "load_fail": "⚠️ 專案載入失敗：", "load_warn_img": "⚠️ 請先載入與該專案相符的圖檔！", "undo_warn": "沒有可復原的手動修改紀錄！(僅記錄最後一次油漆桶)", "save_warn_img": "⚠️ 請先載入圖檔！", "save_fail_report": "儲存檔案失敗：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "【 檢測流程與基本操作 】\n\n1. 檔案載入：從左上角「檔案」讀取 X-ray 影像檔或專案檔 (.vod)。\n2. 縮放與平移：\n   • 畫面內捲動滑鼠滾輪可「無死角縮放」。\n   • 按住滑鼠中鍵 (或切換至平移模式按左鍵) 可「拖曳平移」畫面。\n3. 右鍵選單：在影像區域點擊右鍵，可快速呼叫工具列切換模式。\n\n【 參數分析與氣泡框選 】\n\n1. 框選晶片 (ROI)：切換至「📌 框選」模式，在畫面上拖曳定義檢測範圍。\n2. AI 自動最佳化：點擊面板「🤖 自動最佳化」，系統會啟動 Otsu 演算法分析背景，自動為您找到數學上最完美的氣泡切割閾值。\n3. 強制疊加遮罩：若畫面有多個亮度落差極大的區塊，可調好一區的參數後點擊「➕ 鎖定並疊加」，再調整參數抓下一區。\n\n【 手動編修工具 】\n\n1. 手動補點/擦除：切換至「🖌️ 補點」或「🧼 擦除」，可手動塗抹遺漏的氣泡或擦去雜訊。滾輪可調整畫筆尺寸。\n2. 智慧填滿 (油漆桶)：切換至「🪣 油漆」，點擊氣泡內部可自動偵測邊界並填滿。滾輪可調整填滿寬容度。\n3. 孔洞強制密合：勾選「✨ 強制填補內部孔洞」，可自動將所有甜甜圈狀、C字型的氣泡內部破洞填為實心。\n\n【 報表匯出 】\n\n1. 勾選「顯示各氣泡編號與佔比」，即可在畫面上標示所有氣泡排名與其個別空洞率。\n2. 點選「檔案 -> 匯出報表」，即可將目前的檢測框與計算數據打包儲存為高畫質 JPG 報表。"
+            },
+            "zh-CN": {
+                "m1": "📁 选择图档", "m2": "📂 载入项目", "m3": "💾 保存项目", "m4": "📊 导出报表", "m5": "❓ 说明",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "图像", "t2": "气泡", "t3": "编修",
+                "p1": "图像状态 with 预处理", "p2": "智能气泡检测参数", "p3": "🔥 联合检测引擎", "p4": "检视控制", "p5": "手动编修工具",
+                "l1": "图像正负片反转", "l2": "强化对比 (CLAHE)", "l3": "去纹平滑度 (Bilateral)", "l4": "画面缩放 (Zoom)", "l5": "对焦锐化", "l6": "亮度/对比 (Alpha)", "l7": "Gamma 校正",
+                "l8": "提取范围 (Kernel)", "l9": "边缘平滑", "l10": "最小气泡面积", "l11": "最小圆形度",
+                "l12": "🤖 自动优化", "l13": "➕ 锁定并叠加",
+                "l14": "引擎 1: Otsu (全局阈值)", "l15": "引擎 2: Canny (边缘轮廓)", "l16": "引擎 3: Adaptive (局部适应)",
+                "l17": "显示红光", "l18": "显示各气泡编号与占比", "l19": "强制填补内部孔洞", "l20": "遮罩透明度:",
+                "l21": "✋ 平移", "l22": "🎯 框选", "l23": "🖌️ 补点", "l24": "🧼 擦除", "l25": "🪣 油漆",
+                "l26": "画笔尺寸:", "l27": "断点结合 (Gap Fill)", "l28": "填满宽容度:",
+                "l29": "↩️ 撤销", "l30": "🗑️ 清空所有修改",
+                "l31": "存档加入水印 (Watermark)", "l32": "判定门槛 (%):",
+                "rm_pan": "平移画面", "rm_roi": "框选 / 缩放芯片", "rm_draw": "手动补点", "rm_erase": "手动擦除", "rm_fill": "智能填满 (油漆桶)",
+                "status_ready": "✔️ 就绪", "status_error": "⚠️ 运算错误", "status_ai_busy": "⌛ AI 分析中...", "status_ai_fail": "⚠️ AI 失败: ", "status_load_success": "✔️ 项目载入成功",
+                "save_success": "✅ 项目已保存 (.vod)，此文件已包含图像与所有设置。", "export_success": "✅ 报表导出成功！", "load_fail": "⚠️ 项目载入失败：", "load_warn_img": "⚠️ 请先载入与该项目相符的图档！", "undo_warn": "没有可撤销的手动修改记录！", "save_warn_img": "⚠️ 请先载入图档！", "save_fail_report": "保存文件失败：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ 流程与基本操作 ]\n\n1. 文件载入：读取 X-ray 图像或项目文件 (.vod)。\n2. 缩放与平移：\n   • 滚轮缩放。\n   • 中键平移。\n3. 右键菜单快速切换模式。\n\n[ 参数分析与 ROI ]\n\n1. 框选芯片 (ROI)：定义检测范围。\n2. AI 自动优化：自动找到最佳阈值。\n3. 锁定并叠加：累计遮罩。\n\n[ 编辑工具 ]\n\n1. 手动补点/擦除：手动修正。滚轮调尺寸。\n2. 智能填满：自动探测边界。滚轮调宽容度。\n3. 强制填补孔洞：自动填实孔洞。\n\n[ 报表导出 ]\n\n1. 开启显示编号与占比。\n2. 导出高画质 JPG 报表。"
+            },
+            "en": {
+                "m1": "📁 Open Image", "m2": "📂 Load Project", "m3": "💾 Save Project", "m4": "📊 Export Report", "m5": "❓ Help",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "IMG", "t2": "VOID", "t3": "EDIT",
+                "p1": "Image Preprocessing", "p2": "Smart Void Parameters", "p3": "🔥 Fusion Engine", "p4": "View Controls", "p5": "Manual Edit Tools",
+                "l1": "Invert Image", "l2": "CLAHE Contrast", "l3": "De-stripe Filter", "l4": "Zoom Level", "l5": "Sharpen", "l6": "Brightness (Alpha)", "l7": "Contrast Gamma",
+                "l8": "Kernel Size", "l9": "Morphology", "l10": "Min Area", "l11": "Min Circularity",
+                "l12": "🤖 Auto Optimize", "l13": "➕ Accumulate Mask",
+                "l14": "Global Thresh (Otsu)", "l15": "Canny Edge", "l16": "Adaptive Thresh",
+                "l17": "Show Red Mask", "l18": "Show Void Labels", "l19": "Solidify Voids", "l20": "Mask Opacity:",
+                "l21": "✋ Pan", "l22": "🎯 ROI Select", "l23": "🖌️ Draw", "l24": "🧼 Erase", "l25": "🪣 Smart Fill",
+                "l26": "Brush Size (Wheel):", "l27": "Gap Fill (Morph):", "l28": "Fill Tolerance (Wheel):",
+                "l29": "↩️ Undo Fill", "l30": "🗑️ Clear Edits",
+                "l31": "Add Watermark to Report", "l32": "Void Threshold (%):",
+                "rm_pan": "Pan View", "rm_roi": "ROI / Zoom Chip", "rm_draw": "Manual Draw", "rm_erase": "Manual Erase", "rm_fill": "Smart Fill (Bucket)",
+                "status_ready": "✔️ Ready", "status_error": "⚠️ Error", "status_ai_busy": "⌛ AI Busy...", "status_ai_fail": "⚠️ AI Fail: ", "status_load_success": "✔️ Load Success",
+                "save_success": "✅ Project saved (.vod). Image and settings are included in this file.", "export_success": "✅ Report exported!", "load_fail": "⚠️ Load failed: ", "load_warn_img": "⚠️ Please load the matching image first!", "undo_warn": "No undo history available!", "save_warn_img": "⚠️ Please load an image first!", "save_fail_report": "Save failed: ",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ Basic Operations ]\n\n1. File Loading: Open images or project files.\n2. Zoom & Pan: Scroll wheel to zoom, Middle button to pan.\n\n[ Detection & ROI ]\n\n1. Select ROI: Drag to define the area.\n2. Auto Optimize: AI finds the optimal threshold.\n3. Lock & Add: Accumulate masks.\n\n[ Editing Tools ]\n\n1. Draw/Erase: Manually patch/remove noise.\n2. Smart Fill: Auto-detect borders and fill.\n3. Solidify Holes: Fill inner gaps.\n\n[ Exporting ]\n\n1. Enable 'Show Void Labels'.\n2. Export JPG reports."
+            },
+            "ja": {
+                "m1": "📁 画像を開く", "m2": "📂 プロジェクト読込", "m3": "💾 プロジェクト保存", "m4": "📊 レポート出力", "m5": "❓ ヘルプ",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "画像", "t2": "ボイド", "t3": "編集",
+                "p1": "画像狀態と前処理", "p2": "ボイド検出パラメータ", "p3": "🔥 統合エンジン", "p4": "表示制御", "p5": "手動編集ツール",
+                "l1": "ネガポジ反転", "l2": "コントラスト強調", "l3": "平滑化", "l4": "ズーム", "l5": "シャープネス", "l6": "明るさ/コントラスト", "l7": "ガンマ補正",
+                "l8": "抽出範囲", "l9": "エッジ平滑化", "l10": "最小面積", "l11": "最小円形度",
+                "l12": "🤖 自動最適化", "l13": "➕ ロックして追加",
+                "l14": "エンジン 1: Otsu", "l15": "エンジン 2: Canny", "l16": "エンジン 3: Adaptive",
+                "l17": "マスク表示", "l18": "番号と割合を表示", "l19": "内部の穴を埋める", "l20": "不透明度:",
+                "l21": "✋ パン", "l22": "🎯 枠", "l23": "🖌️ 描画", "l24": "🧼 消去", "l25": "🪣 塗る",
+                "l26": "ブラシサイズ:", "l27": "隙間密着度", "l28": "許容度:",
+                "l29": "↩️ 元に戻す", "l30": "🗑️ クリア",
+                "l31": "透かし保存 (Watermark)", "l32": "判定閾値 (%):",
+                "rm_pan": "画面移動", "rm_roi": "範囲選択 / ズーム", "rm_draw": "手動描画", "rm_erase": "手動消去", "rm_fill": "スマート塗りつぶし",
+                "status_ready": "✔️ 準備完了", "status_error": "⚠️ エラー", "status_ai_busy": "⌛ 解析中...", "status_ai_fail": "⚠️ 失敗: ", "status_load_success": "✔️ 読込成功",
+                "save_success": "✅ プロジェクトが保存されました。", "export_success": "✅ レポートが出力されました！", "load_fail": "⚠️ 失敗: ", "load_warn_img": "⚠️ 画像を先に読み込んでください！", "undo_warn": "履歴がありません！", "save_warn_img": "⚠️ 画像を先に読み込んでください！", "save_fail_report": "保存失敗：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ 基本操作 ]\n1. ファイル読込: 画像やプロジェクトを開きます。\n2. ズームとパン: ホイールでズーム、中ボタンで移動。\n\n[ ROI選択 ]\n1. 枠選択(ROI): 検出範囲を指定します。\n2. 自動最適化: 最適な閾値を見つけます。\n3. ロックして追加: マスクを重ねます。\n\n[ 編集ツール ]\n1. 描画/消去: 手動修正。\n2. 塗りつぶし: 境界自動検出。\n3. 穴を埋める: 內部的隙間を埋めます。\n\n[ レポート出力 ]\n1. 割合を表示。\n2. JPGレポート出力。"
+            },
+            "ko": {
+                "m1": "📁 이미지 열기", "m2": "📂 불러오기", "m3": "💾 저장", "m4": "📊 보고서 내보내기", "m5": "❓ 도움말",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "이미지", "t2": "보이드", "t3": "편집",
+                "p1": "이미지 전처리", "p2": "감지 매개변수", "p3": "🔥 통합 엔진", "p4": "수동 편집", "p5": "도구",
+                "l1": "반전", "l2": "대비 강화", "l3": "평활화", "l4": "확대", "l5": "선명도", "l6": "밝기/대비", "l7": "감마",
+                "l8": "추출 범위", "l9": "가장자리 평활화", "l10": "최소 면적", "l11": "최소 원형도",
+                "l12": "🤖 자동 최적화", "l13": "➕ 잠금 및 추가",
+                "l14": "엔진 1: Otsu", "l15": "엔진 2: Canny", "l16": "엔진 3: Adaptive",
+                "l17": "마스크 표시", "l18": "번호 및 비율 표시", "l19": "내부 구멍 채우기", "l20": "불투명도:",
+                "l21": "✋ 이동", "l22": "🎯 영역", "l23": "🖌️ 그리기", "l24": "지우기", "l25": "채우기",
+                "l26": "브러시:", "l27": "틈새 닫기", "l28": "허용 오차:",
+                "l29": "↩️ 실행 취소", "l30": "모두 지우기",
+                "l31": "워터마크 저장 (Watermark)", "l32": "판정 임계값 (%):",
+                "rm_pan": "화면 이동", "rm_roi": "영역 선택 / 확대", "rm_draw": "수동 그리기", "rm_erase": "수동 지우기", "rm_fill": "스마트 채우기",
+                "status_ready": "✔️ 준비 완료", "status_error": "⚠️ 오류", "status_ai_busy": "⌛ 분석 중...", "status_ai_fail": "⚠️ 실패: ", "status_load_success": "✔️ 불러오기 성공",
+                "save_success": "✅ 프로젝트가 저장되었습니다.", "export_success": "✅ 보고서가 내보내졌습니다!", "load_fail": "⚠️ 실패: ", "load_warn_img": "⚠️ 이미지를 먼저 불러오세요!", "undo_warn": "기록이 없습니다!", "save_warn_img": "⚠️ 이미지를 먼저 불러오세요!", "save_fail_report": "저장 실패：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ 기본 작업 ]\n1. 파일 불러오기: 이미지 열기.\n2. 확대/축소 및 이동: 휠로 확대.\n\n[ 영역(ROI) 선택 ]\n1. 영역 선택: 범위 지정.\n2. 자동 최적화: AI 임계값 설정.\n3. 잠금 및 추가: 마스크 누적.\n\n[ 편집 도구 ]\n1. 그리기/지우기.\n2. 스마트 채우기.\n3. 구멍 채우기.\n\n[ 내보내기 ]\n1. 비율 표시.\n2. JPG 보고서 저장."
+            },
+            "fr": {
+                "m1": "📁 Ouvrir", "m2": "📂 Charger", "m3": "💾 Enregistrer", "m4": "📊 Exporter", "m5": "❓ Aide",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "Image", "t2": "Vides", "t3": "Édition",
+                "p1": "Prétraitement", "p2": "Paramètres", "p3": "🔥 Moteurs Fusion", "p4": "Édition manuelle", "p5": "Outils",
+                "l1": "Inverser", "l2": "Améliorer (CLAHE)", "l3": "Lissage", "l4": "Zoom", "l5": "Netteté", "l6": "Contraste", "l7": "Gamma",
+                "l8": "Noyau", "l9": "Lisser les bords", "l10": "Surface min.", "l11": "Circularité min.",
+                "l12": "🤖 Optimisation Auto", "l13": "➕ Verrouiller & Ajouter",
+                "l14": "Moteur 1: Otsu", "l15": "Moteur 2: Canny", "l16": "Moteur 3: Adaptive",
+                "l17": "Afficher masque", "l18": "Afficher numéros", "l19": "Remplir trous internes", "l20": "Opacité:",
+                "l21": "✋ Déplacer", "l22": "🎯 ROI", "l23": "🖌️ Dessiner", "l24": "Effacer", "l25": "Remplir",
+                "l26": "Pinceau:", "l27": "Fermer espaces", "l28": "Tolérance:",
+                "l29": "↩️ Annuler", "l30": "Tout effacer",
+                "l31": "Filigrane (Watermark)", "l32": "Seuil Taux (%):",
+                "rm_pan": "Déplacer vue", "rm_roi": "Sélectionner ROI", "rm_draw": "Dessin manuel", "rm_erase": "Effacement manuel", "rm_fill": "Remplissage intelligent",
+                "status_ready": "✔️ Prêt", "status_error": "⚠️ Erreur", "status_ai_busy": "⌛ Analyse...", "status_ai_fail": "⚠️ Échec: ", "status_load_success": "✔️ Succès",
+                "save_success": "✅ Projet enregistré.", "export_success": "✅ Rapport exporté!", "load_fail": "⚠️ Échec: ", "load_warn_img": "⚠️ Chargez l'image d'abord!", "undo_warn": "Pas d'historique!", "save_warn_img": "⚠️ Chargez l'image d'abord!", "save_fail_report": "Échec de l'enregistrement：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ Opérations ]\n1. Charger: Ouvrez des fichiers.\n2. Zoom/Déplacer.\n\n[ ROI ]\n1. ROI: Zone de détection.\n2. Optimisation Auto.\n3. Verrouiller & Ajouter.\n\n[ Édition ]\n1. Dessiner/Effacer.\n2. Remplir.\n3. Trous internes.\n\n[ Exporter ]\n1. Pourcentages.\n2. Rapport JPG."
+            },
+            "de": {
+                "m1": "📁 Öffnen", "m2": "📂 Laden", "m3": "💾 Speichern", "m4": "📊 Exportieren", "m5": "❓ Hilfe",
+                "title": "X-ray Void Cal v4.0 - Ultimate Performance",
+                "t1": "Bild", "t2": "Voids", "t3": "Bearbeiten",
+                "p1": "Bildvorverarbeitung", "p2": "Parameter", "p3": "🔥 Fusions-Engines", "p4": "Manuelle Bearbeitung", "p5": "Werkzeuge",
+                "l1": "Umkehren", "l2": "Kontrast (CLAHE)", "l3": "Glättung", "l4": "Zoom", "l5": "Schärfen", "l6": "Kontrast", "l7": "Gamma",
+                "l8": "Kernelgröße", "l9": "Kanten glätten", "l10": "Min. Fläche", "l11": "Min. Zirkularität",
+                "l12": "🤖 Auto-Optimierung", "l13": "➕ Sperren & Hinzufügen",
+                "l14": "Engine 1: Otsu", "l15": "Engine 2: Canny", "l16": "Engine 3: Adaptive",
+                "l17": "Maske anzeigen", "l18": "Nummern anzeigen", "l19": "Interne Löcher füllen", "l20": "Deckkraft:",
+                "l21": "✋ Verschieben", "l22": "🎯 ROI", "l23": "Zeichnen", "l24": "Radieren", "l25": "Füllen",
+                "l26": "Pinselgröße:", "l27": "Lücken schließen", "l28": "Toleranz:",
+                "l29": "↩️ Rückgängig", "l30": "Alles löschen",
+                "l31": "Wasserzeichen (Watermark)", "l32": "Grenzwert (%):",
+                "rm_pan": "Ansicht verschieben", "rm_roi": "ROI auswählen", "rm_draw": "Manuelles Zeichnen", "rm_erase": "Manuelles Radieren", "rm_fill": "Intelligentes Füllen",
+                "status_ready": "✔️ Bereit", "status_error": "⚠️ Fehler", "status_ai_busy": "⌛ Analyse...", "status_ai_fail": "⚠️ Fehler: ", "status_load_success": "✔️ Erfolg",
+                "save_success": "✅ Projekt gespeichert.", "export_success": "✅ Bericht exportiert!", "load_fail": "⚠️ Fehler: ", "load_warn_img": "⚠️ Bild zuerst laden!", "undo_warn": "Kein Verlauf!", "save_warn_img": "⚠️ Bild zuerst laden!", "save_fail_report": "Speichern fehlgeschlagen：",
+                "void_lbl": "Void rate : {0:.2f} %", "guide": "[ Bedienung ]\n1. Datei laden.\n2. Zoomen/Verschieben.\n\n[ ROI ]\n1. ROI-Auswahl.\n2. Auto-Optimierung.\n3. Sperren & Hinzufügen.\n\n[ Bearbeitung ]\n1. Zeichnen/Radieren.\n2. Füllen.\n3. Löcher füllen.\n\n[ Exportieren ]\n1. Prozentsätze.\n2. JPG-Bericht."
+            }
+        };
+
+        function getTxt(key) {
+            return I18N_DICT[currentLang][key] || key;
+        }
+
+        function walkText(node, dict, fromLang, toLang) {
+            if (node.nodeType === 3) {
+                let text = node.nodeValue.trim();
+                if (text) {
+                    let key = Object.keys(dict[fromLang]).find(k => dict[fromLang][k] === text);
+                    if (key && dict[toLang] && dict[toLang][key]) {
+                        node.nodeValue = node.nodeValue.replace(text, dict[toLang][key]);
+                    }
+                }
+            } else if (node.nodeType === 1 && node.nodeName !== "SCRIPT" && node.nodeName !== "STYLE") {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    walkText(node.childNodes[i], dict, fromLang, toLang);
+                }
+            }
+        }
+
+        function toggleLangMenu() {
+            let m = document.getElementById('langMenu');
+            if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#menu-lang')) {
+                let m = document.getElementById('langMenu');
+                if (m) m.style.display = 'none';
+            }
+        });
+
+        function setLang(lang, e) {
+            if (e) e.stopPropagation();
+            let lm = document.getElementById('langMenu');
+            if (lm) lm.style.display = 'none';
+            if (lang === currentLang) return;
+
+            walkText(document.body, I18N_DICT, currentLang, lang);
+
+            let ml = document.getElementById('menu-lang');
+            const langNames = {
+                'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'en': 'English',
+                'ja': '日本語', 'ko': '한국어', 'fr': 'Français', 'de': 'Deutsch'
+            };
+            let label = (lang === 'en' || lang === 'fr' || lang === 'de') ? '🌐 Lang ▼' : '🌐 語言 ▼';
+            if (ml) {
+                let menuHtml = label + '\n<div id="langMenu" style="display: none; position: absolute; top: 100%; left: 0; background: #333; border: 1px solid #454545; z-index: 1000; min-width: 100px;">';
+                for (let k in langNames) {
+                    menuHtml += `<div class="cm-item" onclick="setLang('${k}', event)">${langNames[k]}</div>`;
+                }
+                menuHtml += '</div>';
+                ml.innerHTML = menuHtml;
+            }
+
+            currentLang = lang;
+            document.title = getTxt('title');
+            document.getElementById('status').innerText = getTxt('status_ready');
+
+            // 更新右鍵選單
+            document.getElementById('cm-pan').innerText = getTxt('rm_pan');
+            document.getElementById('cm-roi').innerText = getTxt('rm_roi');
+            document.getElementById('cm-draw').innerText = getTxt('rm_draw');
+            document.getElementById('cm-erase').innerText = getTxt('rm_erase');
+            document.getElementById('cm-fill').innerText = getTxt('rm_fill');
+
+            // 強制更新帶有 Emoji 的功能按鈕
+            if (document.getElementById('btn-auto-opt')) document.getElementById('btn-auto-opt').innerText = getTxt('l12');
+            if (document.getElementById('btn-accumulate')) document.getElementById('btn-accumulate').innerText = getTxt('l13');
+
+            // 更新空洞率標籤文字
+            if (img.src) {
+                document.getElementById('voidResult').innerText = getTxt('void_lbl').replace("{0:.2f}", currentVoidRate.toFixed(2));
+            }
+        }
+
+        function showHelp() {
+            alert(getTxt('guide'));
+        }
+    </script>
+</body>
+
+</html>
