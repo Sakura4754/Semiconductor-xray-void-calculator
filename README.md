@@ -1,4 +1,4 @@
-# X-ray Void Calculator v4.0 (AOI 氣泡空洞率檢測分析軟體)
+# X-ray Void Calculator v4.0 python and web version  (AOI 氣泡空洞率檢測分析軟體)
 
 ![Language](https://img.shields.io/badge/Language-Python-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
