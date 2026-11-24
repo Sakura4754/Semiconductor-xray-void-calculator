@@ -35,7 +35,7 @@
 
 ### ✨ 核心功能
 * **多國語言介面**：支援繁中、簡中、英、日、韓、法、德語即時切換。
-* **AI 智能最佳化**：整合 **Otsu (大津演算法)**，一鍵自動分析影像背景並設定最完美的氣泡切割閾值。
+* **自動最佳化**：在 ROI 或全圖上用 Otsu 和背景雜訊估算檢測閾值，沿用目前的核心大小、平滑度和形狀篩選設定。
 * **像素級邊界防護**：導入 **Bilateral Filter (雙邊濾波)**，在消除雜訊的同時，完美保留氣泡最銳利的真實物理輪廓。
 * **無死角攝影機系統**：支援極致順暢的縮放 (Zoom) 與平移 (Pan)，輕鬆觀察微小瑕疵。
 * **全方位編修工具**：提供框選 ROI、手動補點、橡皮擦，以及智慧油漆桶填滿功能。
@@ -60,7 +60,7 @@
 
 ### ✨ 核心功能
 * **多国语言界面**：支持繁中、简中、英、日、韩、法、德语切换。
-* **AI 智能优化**：整合 **Otsu (大津算法)**，自动寻找最佳类间方差作为阈值。
+* **自动优化**：在 ROI 或全图上使用 Otsu 和背景噪声估算检测阈值，沿用当前的核大小、平滑度和形状筛选设置。
 * **像素级边界防护**：导入 **Bilateral Filter (双边滤波)**，完美保留锐利边缘。
 
 ---
@@ -71,7 +71,7 @@ A specialized **AOI (Automated Optical Inspection)** assistant software designed
 
 ### ✨ Key Features
 * **Multi-language Interface**: Supports Traditional Chinese, Simplified Chinese, English, Japanese, Korean, French, and German.
-* **AI Optimization**: Integrated **Otsu's Method** for one-click background analysis and optimal thresholding.
+* **Auto Optimize** estimates the detection threshold from Otsu and background noise in the ROI or full image, using the current kernel, smoothing and shape filters.
 * **Bilateral Filtering**: Implements pixel-perfect edge protection to eliminate noise while preserving sharp boundaries.
 * **Professional Report Export**: Generates high-resolution reports with individual bubble percentages and total void rate.
 
@@ -83,7 +83,7 @@ A specialized **AOI (Automated Optical Inspection)** assistant software designed
 
 ### ✨ 主な機能
 * **多言語対応**：繁体字、簡体字、英語、日本語、韓国語、フランス語、ドイツ語の切り替えに対応。
-* **AI 自動最適化**：**大津の2値化**を統合し、最適な閾値をワンクリックで設定します。
+* **自動最適化**：現在のカーネル、平滑化、形状フィルタを使い、ROI または画像全体の大津のしきい値と背景ノイズから検出しきい値を求めます。
 * **ピクセルレベルのエッジ保護**：**バイラテラルフィルタ**でノイズを除去し、エッジを鋭く保ちます。
 
 ---
@@ -94,7 +94,7 @@ A specialized **AOI (Automated Optical Inspection)** assistant software designed
 
 ### ✨ 주요 기능
 * **다국어 인터페이스 지원**: 번체/간체 중국어, 영어, 일본어, 한국어, 프랑스어, 독일어를 지원합니다.
-* **AI 자동 최적화**: **오츠의 방법 (Otsu's Method)** 을 통합하여 배경을 분석하고 최적의 임계값을 자동으로 설정합니다.
+* **자동 최적화**: 현재 커널, 평활화 및 형상 필터를 유지하고 ROI 또는 전체 영상에서 오츠 임계값과 배경 잡음을 이용해 검출 임계값을 산출합니다.
 * **픽셀 수준의 엣지 보호**: **양방향 필터 (Bilateral Filtering)** 를 적용하여 노이즈를 제거하면서도 물리적 경계를 날카롭게 유지합니다.
 
 ---
@@ -105,7 +105,7 @@ Un logiciel d'assistance **AOI (Inspection Optique Automatisée)** conçu pour l
 
 ### ✨ Caractéristiques Principales
 * **Interface multilingue** : Prise en charge du chinois (traditionnel/simplifié), de l'anglais, du japonais, du coréen, du français et de l'allemand.
-* **Optimisation IA** : Intègre la **méthode d'Otsu** pour analyser le fond et définir le seuil optimal en un clic.
+* **Optimisation automatique** du seuil à partir de la méthode d’Otsu et du bruit de fond dans la ROI ou l’image entière, avec le noyau, le lissage et les filtres de forme en cours.
 * **Protection des bords** : Implémente le **filtrage bilatéral** pour éliminer le bruit tout en préservant des limites physiques nettes.
 
 ---
@@ -116,7 +116,7 @@ Eine **AOI (Automatisierte Optische Inspektion)** Assistenzsoftware für industr
 
 ### ✨ Hauptmerkmale
 * **Mehrsprachige Benutzeroberfläche**: Unterstützt Chinesisch (traditionell/vereinfacht), Englisch, Japanisch, Koreanisch, Französisch und Deutsch.
-* **KI-Optimierung**: Integriert die **Otsu-Methode**, um den Hintergrund automatisch zu analysieren und den optimalen Schwellenwert festzulegen.
+* **Automatische Optimierung** des Schwellenwerts anhand der Otsu-Schwelle und des Hintergrundrauschens in der ROI oder im gesamten Bild mit den aktuellen Kernel-, Glättungs- und Formeinstellungen.
 * **Pixelgenauer Kantenschutz**: Implementiert **bilaterale Filterung**, um Rauschen zu eliminieren und scharfe physikalische Grenzen zu erhalten.
 
 ---

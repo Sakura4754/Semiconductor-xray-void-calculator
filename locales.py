@@ -10,7 +10,7 @@ def get_i18n_dict():
         "【 參數分析與氣泡框選 】\n\n"
         "1. 框選晶片 (ROI)：切換至「📌 框選」模式，在畫面上拖曳定義檢測範圍。\n"
         "   • 將游標移至框線邊緣即可拖曳調整大小；移至框內可移動整個區塊。\n"
-        "2. AI 自動最佳化：點擊面板「🤖 自動最佳化」，系統會啟動 Otsu 演算法分析背景，自動為您找到數學上最完美的氣泡切割閾值。\n"
+        "2. 自動最佳化會依 ROI 內的 Otsu 閾值與背景雜訊調整擷取靈敏度。未框選時使用全圖。若大空洞只剩邊緣，請調大提取範圍後再執行。\n"
         "3. 強制疊加遮罩：若畫面有多個亮度落差極大的區塊，可調好一區的參數後點擊「➕ 鎖定並疊加」，再調整參數抓下一區。\n\n"
         "【 手動編修工具 】\n\n"
         "1. 手動補點/擦除：切換至「🖌️ 補點」或「🧼 擦除」，可手動塗抹遺漏的氣泡或擦去雜訊。滾輪可調整畫筆尺寸。\n"
@@ -31,7 +31,7 @@ def get_i18n_dict():
         "【 参数分析与气泡框选 】\n\n"
         "1. 框选芯片 (ROI)：切换至「📌 框选」模式，在画面上拖曳定义检测范围。\n"
         "   • 将光标移至框线边缘即可拖曳调整大小；移至框内可移动整个区块。\n"
-        "2. AI 自动优化：点击面板「🤖 自动优化」，系统会启动 Otsu (大津) 算法分析背景，自动为您找到数学上最完美的气泡切割阈值。\n"
+        "2. 自动优化会根据 ROI 内的 Otsu 阈值和背景噪声调整提取灵敏度。未框选时使用全图。如果大空洞只剩边缘，请增大提取范围后重试。\n"
         "3. 强制叠加遮罩：若画面有多个亮度落差极大的区块，可调好一区的参数后点击「➕ 锁定并叠加」，再调整参数抓下一区。\n\n"
         "【 手动编修工具 】\n\n"
         "1. 手动补点/擦除：切换至「🖌️ 补点」或「🧼 擦除」，可手动涂抹遗漏的气泡或擦去噪点。滚轮可调整画笔尺寸。\n"
@@ -52,7 +52,7 @@ def get_i18n_dict():
         "[ Detection & ROI ]\n\n"
         "1. Select ROI: Switch to '📌 ROI' mode and drag to define the detection area.\n"
         "   • Drag edges to resize, or drag inside the box to move the entire ROI.\n"
-        "2. AI Optimization: Click '🤖 Auto Optimize'. The system utilizes Otsu's method to analyze background and automatically determines the optimal void threshold.\n"
+        "2. Auto Optimize sets the detection threshold using Otsu and background noise within the ROI, or the whole image if no ROI is selected. If only the rim of a large void appears, increase the kernel size and run it again.\n"
         "3. Mask Accumulation: For unevenly exposed chips, set parameters for one region, click '➕ Lock & Add', and proceed to adjust parameters for the next region.\n\n"
         "[ Manual Editing Tools ]\n\n"
         "1. Draw / Erase: Use '🖌️ Draw' or '🧼 Erase' to manually patch missing voids or remove noise. Scroll to adjust brush size.\n"
@@ -73,7 +73,7 @@ def get_i18n_dict():
         "[ パラメータ分析とROI選択 ]\n\n"
         "1. チップの範囲選択 (ROI): 「📌 選択」モードに切り替え、画面上をドラッグして検出範囲を指定します。\n"
         "   • 枠の端にカーソルを合わせるとサイズ調整、枠内をドラッグすると全体を移動できます。\n"
-        "2. AI自動最適化: 「🤖 自動最適化」をクリックすると、Otsu (大津の2値化) アルゴリズムが背景を分析し、数学的に最適な閾値を自動的に見つけ出します。\n"
+        "2. 自動最適化は ROI 内の大津のしきい値と背景ノイズから検出しきい値を設定します。ROI がない場合は画像全体を使います。大きなボイドの縁だけが検出される場合は、カーネルを大きくして再実行してください。\n"
         "3. マスクのロックと追加: 明暗差が極端に大きい複数の領域がある場合、1つの領域のパラメータを調整してから「➕ ロックして追加」をクリックし、次の領域を調整してください。\n\n"
         "[ 手動編集ツール ]\n\n"
         "1. 手動描画/消去: 「🖌️ 描画」または「🧼 消去」に切り替え、検出漏れのボイドを塗りつぶしたり、ノイズを消したりできます。ホイールでブラシサイズを調整できます。\n"
@@ -94,7 +94,7 @@ def get_i18n_dict():
         "[ 매개변수 분석 및 영역(ROI) 선택 ]\n\n"
         "1. 영역 선택 (ROI): '📌 영역 선택' 모드로 전환하고 화면을 드래그하여 감지 범위를 지정합니다.\n"
         "   • 테두리를 드래그하여 크기를 조정하거나, 상자 내부를 드래그하여 전체 영역을 이동할 수 있습니다.\n"
-        "2. AI 자동 최적화: '🤖 자동 최적화'를 클릭하면 시스템이 오츠(Otsu) 알고리즘을 시작하여 배경을 분석하고 가장 완벽한 보이드 분할 임계값을 자동으로 찾습니다.\n"
+        "2. 자동 최적화는 ROI 안의 오츠 임계값과 배경 잡음을 이용해 검출 임계값을 설정합니다. ROI가 없으면 전체 영상을 사용합니다. 큰 보이드의 가장자리만 검출되면 커널 크기를 늘린 뒤 다시 실행하세요.\n"
         "3. 마스크 잠금 및 추가: 밝기 차이가 큰 영역이 여러 개 있는 경우 한 영역의 매개변수를 조정한 후 '➕ 잠금 및 추가'를 클릭하고 다음 영역을 조정합니다.\n\n"
         "[ 수동 편집 도구 ]\n\n"
         "1. 수동 그리기/지우기: '🖌️ 그리기' 또는 '🧼 지우기'로 전환하여 누락된 보이드를 칠하거나 노이즈를 지웁니다. 마우스 휠로 브러시 크기를 조절할 수 있습니다.\n"
@@ -115,7 +115,7 @@ def get_i18n_dict():
         "[ Détection et Sélection ROI ]\n\n"
         "1. Sélection ROI : Passez en mode '📌 Sélection (ROI)' et glissez pour définir la zone de détection.\n"
         "   • Faites glisser les bords pour redimensionner, ou à l'intérieur pour déplacer toute la zone.\n"
-        "2. Optimisation IA : Cliquez sur '🤖 Optimisation Auto'. Le système utilise l'algorithme d'Otsu pour analyser le fond et trouver automatiquement le seuil optimal.\n"
+        "2. Le réglage automatique utilise le seuil d’Otsu et le bruit de fond dans la ROI, ou dans toute l’image en l’absence de ROI. Si seul le contour d’un grand vide apparaît, augmentez la taille du noyau et relancez le calcul.\n"
         "3. Verrouiller et Ajouter : S'il y a des différences d'éclairage extrêmes, réglez une zone, cliquez sur '➕ Verrouiller & Ajouter', puis passez à la zone suivante.\n\n"
         "[ Outils d'édition manuelle ]\n\n"
         "1. Dessiner/Effacer : Utilisez '🖌️ Dessiner' ou '🧼 Effacer' pour corriger les vides manquants ou supprimer le bruit. La molette ajuste la taille du pinceau.\n"
@@ -136,7 +136,7 @@ def get_i18n_dict():
         "[ Erkennung und ROI-Auswahl ]\n\n"
         "1. ROI-Auswahl: Wechseln Sie in den Modus '📌 Auswahl (ROI)' und ziehen Sie einen Rahmen über den Erkennungsbereich.\n"
         "   • Ziehen Sie die Ränder, um die Größe zu ändern, oder in der Mitte, um alles zu verschieben.\n"
-        "2. KI-Auto-Optimierung: Klicken Sie auf '🤖 Auto-Optimierung'. Das System nutzt den Otsu-Algorithmus, um den Hintergrund zu analysieren und den optimalen Schwellenwert zu finden.\n"
+        "2. Die automatische Optimierung bestimmt den Schwellenwert anhand der Otsu-Schwelle und des Hintergrundrauschens in der ROI. Ohne ROI wird das gesamte Bild verwendet. Wird bei einem großen Hohlraum nur der Rand erkannt, vergrößern Sie den Kernel und starten Sie die Optimierung erneut.\n"
         "3. Sperren & Hinzufügen: Bei Bereichen mit stark unterschiedlicher Helligkeit passen Sie zuerst einen Bereich an, klicken auf '➕ Sperren & Hinzufügen' und bearbeiten dann den nächsten.\n\n"
         "[ Manuelle Bearbeitung ]\n\n"
         "1. Zeichnen/Radieren: Verwenden Sie '🖌️ Zeichnen' oder '🧼 Radieren', um fehlende Hohlräume (Voids) auszubessern oder Rauschen zu entfernen. Das Mausrad ändert die Pinselgröße.\n"
@@ -166,7 +166,7 @@ def get_i18n_dict():
             "chk_labels": "顯示各氣泡編號與佔比",
             "btn_undo": "復原", "btn_clear": "清空所有修改",
             "chk_mask": "顯示紅光", "sl_opacity": "遮罩透明度", "chk_wm": "存檔加入浮水印",
-            "status_ready": "✔️ 系統就緒", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "更新檢測中…", "status_ready": "✔️ 系統就緒", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": zh_tw_guide
         },
         "zh-CN": {
@@ -186,7 +186,7 @@ def get_i18n_dict():
             "chk_labels": "显示各气泡编号与占比",
             "btn_undo": "撤销", "btn_clear": "清空所有修改",
             "chk_mask": "显示红光", "sl_opacity": "遮罩透明度", "chk_wm": "存档加入水印",
-            "status_ready": "✔️ 系统就绪", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "正在更新检测…", "status_ready": "✔️ 系统就绪", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": zh_cn_guide
         },
         "en": {
@@ -206,7 +206,7 @@ def get_i18n_dict():
             "chk_labels": "Show Void Labels & %",
             "btn_undo": "Undo", "btn_clear": "Clear All",
             "chk_mask": "Show Mask", "sl_opacity": "Opacity", "chk_wm": "Add Watermark",
-            "status_ready": "✔️ Ready", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "Updating detection…", "status_ready": "✔️ Ready", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": en_guide
         },
         "ja": {
@@ -226,7 +226,7 @@ def get_i18n_dict():
             "chk_labels": "各ボイドの番号と割合を表示",
             "btn_undo": "元に戻す", "btn_clear": "すべての変更をクリア",
             "chk_mask": "マスクを表示", "sl_opacity": "不透明度", "chk_wm": "透かしを保存",
-            "status_ready": "✔️ システム準備完了", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "検出結果を更新中…", "status_ready": "✔️ システム準備完了", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": ja_guide
         },
         "ko": {
@@ -246,7 +246,7 @@ def get_i18n_dict():
             "chk_labels": "각 보이드 번호 및 비율 표시",
             "btn_undo": "실행 취소", "btn_clear": "모든 변경 지우기",
             "chk_mask": "마스크 표시", "sl_opacity": "불투명도", "chk_wm": "워터마크 저장",
-            "status_ready": "✔️ 시스템 준비 완료", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "검출 결과 업데이트 중…", "status_ready": "✔️ 시스템 준비 완료", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": ko_guide
         },
         "fr": {
@@ -266,7 +266,7 @@ def get_i18n_dict():
             "chk_labels": "Afficher numéros et pourcentages",
             "btn_undo": "Annuler", "btn_clear": "Tout effacer",
             "chk_mask": "Afficher le masque", "sl_opacity": "Opacité", "chk_wm": "Ajouter un filigrane",
-            "status_ready": "✔️ Système prêt", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "Mise à jour de la détection…", "status_ready": "✔️ Système prêt", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": fr_guide
         },
         "de": {
@@ -286,7 +286,7 @@ def get_i18n_dict():
             "chk_labels": "Nummern & Prozentsätze anzeigen",
             "btn_undo": "Rückgängig", "btn_clear": "Alles löschen",
             "chk_mask": "Maske anzeigen", "sl_opacity": "Deckkraft", "chk_wm": "Wasserzeichen speichern",
-            "status_ready": "✔️ System bereit", "void_lbl": "Void Rate : {0:.2f} %",
+            "status_filtering": "Erkennung wird aktualisiert…", "status_ready": "✔️ System bereit", "void_lbl": "Void Rate : {0:.2f} %",
             "guide_txt": de_guide
         }
     }

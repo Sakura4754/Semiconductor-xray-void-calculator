@@ -3,12 +3,13 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import json
 import os
 
 # 匯入自訂模組
-from utils import resource_path, img_to_base64, base64_to_img
+from utils import auto_void_threshold, bilateral_filter, ellipse_blackhat, void_regions, resource_path, img_to_base64, base64_to_img
 from widgets import CustomSlider, CustomDropdown, CustomContextMenu
 from locales import get_i18n_dict
 
@@ -29,6 +30,13 @@ class XrayVoidDetector:
         
         self.root.overrideredirect(True)
 
+        self.filter_pool = ThreadPoolExecutor(max_workers=1)
+        self.filter_job = None
+        self.detection_timer = None
+        self.region_feature = self.region_threshold = None
+        self.feature = self.blackhat = None
+        self.feature_size = self.feature_diameter = None
+        self.root.bind("<Destroy>", self.close_filter_pool, add="+")
         self.original_img = None      
         self.processed_img = None     
         self.processed_color = None   
@@ -339,11 +347,11 @@ class XrayVoidDetector:
 
         self.tab_void_frame = tk.Frame(self.control_frame, bg="#252526")
         p2 = self.create_panel(self.tab_void_frame, self.ui_vars["p2_title"])
-        self.add_slider("sl_kernel", "bh_size_slider", 11, 201, 51, self.update_base_thresh_mask, parent=p2)
-        self.add_slider("sl_thresh", "bh_thresh_slider", 1, 100, 15, self.update_base_thresh_mask, parent=p2)
-        self.add_slider("sl_morph", "morph_slider", 0, 15, 3, self.update_base_thresh_mask, parent=p2)
-        self.add_slider("sl_area", "area_slider", 1, 500, 20, self.update_base_thresh_mask, parent=p2)
-        self.add_slider("sl_circ", "circ_slider", 0.05, 1.0, 0.40, self.update_base_thresh_mask, parent=p2)
+        self.add_slider("sl_kernel", "bh_size_slider", 11, 201, 51, self.schedule_detection, parent=p2)
+        self.add_slider("sl_thresh", "bh_thresh_slider", 1, 255, 15, self.schedule_detection, parent=p2)
+        self.add_slider("sl_morph", "morph_slider", 0, 15, 3, self.schedule_detection, parent=p2)
+        self.add_slider("sl_area", "area_slider", 1, 500, 20, self.schedule_detection, parent=p2)
+        self.add_slider("sl_circ", "circ_slider", 0.05, 1.0, 0.40, self.schedule_detection, parent=p2)
         
         btn_frame_ai = tk.Frame(p2, bg="#252526")
         btn_frame_ai.pack(fill=tk.X, pady=(15, 0))
@@ -509,6 +517,7 @@ class XrayVoidDetector:
                 self.img_on_canvas = None
                 
                 self.roi_pts = []; self.tool_mode.set("PAN"); self.selecting_roi = False
+                self.user_mask = self.accumulated_base_mask = self.last_fill_mask = None
                 self.update_cursor()
                 
                 self.cam_x = 0.0; self.cam_y = 0.0
@@ -533,10 +542,22 @@ class XrayVoidDetector:
         if not f: return
         try:
             with open(f, 'r', encoding='utf-8') as f_vod: data = json.load(f_vod)
-            self.original_img = base64_to_img(data.get('original_img'))
-            self.user_mask = base64_to_img(data.get('user_mask'))
-            self.accumulated_base_mask = base64_to_img(data.get('accumulated_base_mask'))
-            self.roi_pts = [tuple(pt) for pt in data.get('roi_pts', [])]
+            original = base64_to_img(data.get('original_img'))
+            if original is None:
+                raise ValueError("Missing original image")
+            manual = base64_to_img(data.get('user_mask'))
+            accumulated = base64_to_img(data.get('accumulated_base_mask'))
+            if any(mask is not None and mask.shape != original.shape for mask in (manual, accumulated)):
+                raise ValueError("Invalid mask dimensions")
+            h, w = original.shape
+            # Earlier web projects stored floating-point ROI corners.
+            points = [(max(0, min(w, int(x))), max(0, min(h, int(y))))
+                      for x, y in data.get('roi_pts', [])[:2]]
+            self.original_img = original
+            self.user_mask = manual
+            self.accumulated_base_mask = accumulated
+            self.last_fill_mask = None
+            self.roi_pts = points
             self.zoom_slider.set(data.get('zoom', 1.0)); self.current_sf = data.get('zoom', 1.0)
             self.sharpen_slider.set(data.get('sharpen', 0.0))
             self.alpha_slider.set(data.get('alpha', 1.0)); self.gamma_slider.set(data.get('gamma', 1.0))
@@ -595,6 +616,7 @@ class XrayVoidDetector:
         if self.processed_img is None or len(self.roi_pts) != 2: return messagebox.showwarning("!", "Please Select ROI first!")
         f_p = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG", "*.jpg")])
         if not f_p: return
+        self.flush_detection()
         p1, p2 = self.roi_pts; x1, y1, x2, y2 = min(p1[0],p2[0]), min(p1[1],p2[1]), max(p1[0],p2[0]), max(p1[1],p2[1])
         full_m = self.get_composite_mask(); roi_c = self.processed_color[y1:y2, x1:x2].copy(); roi_m = full_m[y1:y2, x1:x2]
         
@@ -627,19 +649,23 @@ class XrayVoidDetector:
             messagebox.showinfo("Success", "Report Exported")
 
     def accumulate_mask(self):
+        self.flush_detection()
         if self.base_thresh_mask is None: return
         if self.accumulated_base_mask is None: self.accumulated_base_mask = self.base_thresh_mask.copy()
         else: self.accumulated_base_mask = cv2.bitwise_or(self.accumulated_base_mask, self.base_thresh_mask)
         self.update_display_cache(); self.schedule_render()
         self.status_lbl.config(text="✔️ Mask Accumulated", fg="#89d185")
 
-    def update_base(self):
+    def update_base(self, auto_threshold=False):
+        if getattr(self, 'base_timer', None):
+            self.root.after_cancel(self.base_timer)
+            self.base_timer = None
         if self.original_img is None: return
         base_img = self.original_img.copy()
         if self.invert_img_var.get(): base_img = cv2.bitwise_not(base_img)
         destripe_v = int(self.destripe_slider.get())
         if destripe_v > 0:
-            base_img = cv2.bilateralFilter(base_img, destripe_v, destripe_v * 2, destripe_v / 2.0)
+            base_img = bilateral_filter(base_img, destripe_v, destripe_v * 2, destripe_v / 2.0)
         if self.use_clahe_var.get():
             limit = self.clahe_limit_slider.get()
             clahe = cv2.createCLAHE(clipLimit=limit, tileGridSize=(8, 8))
@@ -651,66 +677,114 @@ class XrayVoidDetector:
         adj = cv2.convertScaleAbs(base_img, alpha=self.alpha_slider.get(), beta=0)
         lut = np.array([((i/255.0)**(1.0/self.gamma_slider.get()))*255 for i in np.arange(0, 256)]).astype("uint8")
         self.processed_img = cv2.LUT(adj, lut)
+        self.feature = self.blackhat = self.feature_size = None
+        if self.filter_job is not None:
+            self.filter_job[0].cancel()
+            self.filter_job = None
         self.processed_color = cv2.cvtColor(self.processed_img, cv2.COLOR_GRAY2RGB)
         if self.user_mask is None or self.user_mask.shape != self.processed_img.shape:
             self.user_mask = np.zeros_like(self.processed_img)
             self.drawn_bounds = None
-        self.update_base_thresh_mask()
+        return self.update_base_thresh_mask(auto_threshold)
 
-    def update_base_thresh_mask(self):
+    def detection_filter_settings(self):
+        size = int(self.bh_size_slider.get()) | 1
+        smooth = int(self.morph_slider.get())
+        return size, min(15, smooth * 2 + 1) if smooth else 0
+
+    @staticmethod
+    def filter_features(image, size, diameter, blackhat):
+        if blackhat is None:
+            blackhat = ellipse_blackhat(image, size)
+        feature = bilateral_filter(blackhat, diameter, diameter * 3, diameter * 3) if diameter else blackhat
+        return blackhat, feature
+
+    def close_filter_pool(self, event):
+        if event.widget is self.root:
+            self.filter_pool.shutdown(wait=False)
+
+    def schedule_detection(self):
+        if self.processed_img is not None and self.detection_timer is None:
+            self.detection_timer = self.root.after(16, self.preview_detection)
+
+    def preview_detection(self):
+        self.detection_timer = None
+        size, diameter = self.detection_filter_settings()
+        if self.filter_job is not None:
+            future, image, job_size, job_diameter = self.filter_job
+            if future.done():
+                self.filter_job = None
+                blackhat, feature = future.result()
+                if image is self.processed_img and job_size == size:
+                    self.blackhat, self.feature = blackhat, feature
+                    self.feature_size, self.feature_diameter = job_size, job_diameter
+        if (size, diameter) == (self.feature_size, self.feature_diameter):
+            self.update_base_thresh_mask()
+            return
+        if self.filter_job is None:
+            self.ui_vars["status_ready"].set(self.i18n[self.current_lang]["status_filtering"])
+            cached = self.blackhat if size == self.feature_size else None
+            future = self.filter_pool.submit(self.filter_features, self.processed_img, size, diameter, cached)
+            self.filter_job = future, self.processed_img, size, diameter
+        self.schedule_detection()
+
+    def flush_detection(self):
+        if getattr(self, 'base_timer', None):
+            self.update_base()
+        elif self.detection_timer is not None:
+            self.update_base_thresh_mask()
+
+    def update_base_thresh_mask(self, auto_threshold=False):
         if self.processed_img is None: return
-        bh_size = int(self.bh_size_slider.get()); bh_size += 1 if bh_size % 2 == 0 else 0
+        if self.detection_timer is not None:
+            self.root.after_cancel(self.detection_timer)
+            self.detection_timer = None
+        size, diameter = self.detection_filter_settings()
+        if (size, diameter) != (self.feature_size, self.feature_diameter):
+            cached = self.blackhat if size == self.feature_size else None
+            self.blackhat, self.feature = self.filter_features(self.processed_img, size, diameter, cached)
+            self.feature_size, self.feature_diameter = size, diameter
+        extracted_img = self.feature
+        min_area = float(self.area_slider.get())
+        min_circ = float(self.circ_slider.get())
+
+        if auto_threshold:
+            sample = extracted_img
+            if len(self.roi_pts) == 2:
+                (ax, ay), (bx, by) = self.roi_pts
+                sample = extracted_img[min(ay, by):max(ay, by), min(ax, bx):max(ax, bx)]
+            if not sample.size:
+                return
+            self.bh_thresh_slider.set(auto_void_threshold(sample))
+            self.on_slider_change_visual("bh_thresh_slider", self.bh_thresh_slider.get(), None)
+
         bh_thresh = int(self.bh_thresh_slider.get())
-        m_size = int(self.morph_slider.get()); min_area = float(self.area_slider.get()); min_circ = float(self.circ_slider.get())
-
-        kernel_bh = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (bh_size, bh_size))
-        extracted_img = cv2.morphologyEx(self.processed_img, cv2.MORPH_BLACKHAT, kernel_bh)
-        
-        if m_size > 0:
-            d = min(15, m_size * 2 + 1) 
-            extracted_img = cv2.bilateralFilter(extracted_img, d, d * 3, d * 3)
-
-        _, mask = cv2.threshold(extracted_img, bh_thresh, 255, cv2.THRESH_BINARY)
-            
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        filtered_mask = np.zeros_like(mask)
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area < min_area: continue 
-            perimeter = cv2.arcLength(cnt, True)
-            if perimeter == 0: continue
-            if (4 * np.pi * area) / (perimeter ** 2) >= min_circ:
-                cv2.drawContours(filtered_mask, [cnt], -1, 255, thickness=cv2.FILLED)
+        if self.region_feature is not extracted_img or self.region_threshold != bh_thresh:
+            self.regions = void_regions(extracted_img, bh_thresh)
+            self.region_feature = extracted_img
+            self.region_threshold = bh_thresh
+        ids, areas, circularities = self.regions
+        accepted = ((areas >= min_area) & (circularities >= min_circ)).astype(np.uint8) * 255
+        filtered_mask = accepted[ids]
 
         if self.accumulated_base_mask is not None: self.base_thresh_mask = cv2.bitwise_or(filtered_mask, self.accumulated_base_mask)
         else: self.base_thresh_mask = filtered_mask
         self.update_display_cache()
         self.schedule_render()
+        if self.ui_vars["status_ready"].get() == self.i18n[self.current_lang]["status_filtering"]:
+            self.ui_vars["status_ready"].set(self.i18n[self.current_lang]["status_ready"])
+        return bh_thresh
 
     def auto_heuristic_search(self):
         if self.processed_img is None: return
-        self.status_lbl.config(text="⌛ 幾何邊界分析中...", fg="#d7ba7d"); self.root.update()
-        
-        eval_area = self.processed_img
         if len(self.roi_pts) == 2:
-            p1, p2 = self.roi_pts; x1, y1, x2, y2 = min(p1[0],p2[0]), min(p1[1],p2[1]), max(p1[0],p2[0]), max(p1[1],p2[1])
-            eval_area = self.processed_img[y1:y2, x1:x2]
-        if eval_area.size == 0: return
-
-        bh_size = int(self.bh_size_slider.get()); bh_size += 1 if bh_size % 2 == 0 else 0
-        kernel_bh = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (bh_size, bh_size))
-        extracted_img = cv2.morphologyEx(eval_area, cv2.MORPH_BLACKHAT, kernel_bh)
-
-        blurred = cv2.bilateralFilter(extracted_img, 9, 30, 30)
-        otsu_thresh, _ = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        best_thresh = max(1, int(otsu_thresh * 0.85))
-
-        self.bh_thresh_slider.set(best_thresh)
-        self.morph_slider.set(2) 
-        self.area_slider.set(10)
-        self.circ_slider.set(0.15)
-        self.update_base_thresh_mask()
-        self.status_lbl.config(text=f"✔️ 邊緣精準最佳化完成 (閾值: {best_thresh})", fg="#89d185")
+            (ax, ay), (bx, by) = self.roi_pts
+            if ax == bx or ay == by: return
+        compute = self.update_base if getattr(self, 'base_timer', None) else self.update_base_thresh_mask
+        threshold = compute(auto_threshold=True)
+        if threshold is not None:
+            t = self.i18n[self.current_lang]
+            self.ui_vars["status_ready"].set(f"✔ {t['btn_ai']} ({t['sl_thresh']}: {threshold})")
 
     def get_composite_mask(self):
         if self.base_thresh_mask is None: return None
@@ -819,6 +893,7 @@ class XrayVoidDetector:
             self.update_display_cache()
             
         elif self.tool_mode.get() == "FILL":
+            self.flush_detection()
             if self.preview_fill_active:
                 self.last_fill_mask = self.user_mask.copy()
                 if self.preview_mask is not None: 
@@ -849,6 +924,9 @@ class XrayVoidDetector:
                     elif len(self.roi_pts) == 2: self.roi_pts[1] = (rx, ry)
                 elif self.drag_mode == "move":
                     dx = rx - self.drag_start_pos[0]; dy = ry - self.drag_start_pos[1]; op1, op2 = self.drag_start_roi
+                    h, w = self.processed_img.shape
+                    dx = max(-min(op1[0], op2[0]), min(dx, w - max(op1[0], op2[0])))
+                    dy = max(-min(op1[1], op2[1]), min(dy, h - max(op1[1], op2[1])))
                     self.roi_pts = [(op1[0]+dx, op1[1]+dy), (op2[0]+dx, op2[1]+dy)]
                 self.update_display_cache()
                 self.schedule_render()
@@ -1058,6 +1136,7 @@ class XrayVoidDetector:
         
     def clear_all(self): 
         if self.user_mask is not None: self.user_mask.fill(0)
+        self.last_fill_mask = None
         self.accumulated_base_mask = None; self.roi_pts = []; self.selecting_roi = True  
         self.cancel_preview(); self.update_base_thresh_mask()
         
